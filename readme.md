@@ -64,6 +64,16 @@ chmod +x install.sh
 ./install.sh
 ```
 
+### Interactive Voice Wizard (`setup.py`)
+
+Run `setup.py` anytime to configure your regional voice preferences:
+
+```bash
+python3 setup.py
+```
+
+The wizard provides a minimal, clean menu to choose your accent (e.g. US, UK, Argentina, Spain, Mexico, Brazil, France, Germany, Italy), audition voice samples in real time, and confirm your selection.
+
 ## ⚙️ Integration (Antigravity & Others)
 
 Add the following configuration to your MCP client settings (e.g., Antigravity or Claude Code configuration file):
