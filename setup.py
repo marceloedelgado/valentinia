@@ -11,7 +11,7 @@ from typing import Optional, Tuple, Dict
 VOICE_MAP = {
     # English
     "en_US": {
-        "key": "en_US-lessac-high",
+        "key": "en_US-ljspeech-high",
         "label": "USA",
         "sample": "Hello, all tasks have been completed successfully.",
     },
@@ -537,7 +537,7 @@ class SetupWizard:
 if __name__ == "__main__":
     wizard = SetupWizard()
     if len(sys.argv) > 1 and sys.argv[1] in ("-y", "--non-interactive"):
-        wizard.ensure_voice_downloaded("en_US-lessac-high")
-        wizard.save_env_config("en_US-lessac-high")
+        wizard.ensure_voice_downloaded("en_US-ljspeech-high")
+        wizard.save_env_config("en_US-ljspeech-high")
     else:
         wizard.run()
