@@ -68,12 +68,12 @@
         },
         "valentinia.voice": {
           "type": "string",
-          "default": "es_AR-daniela-high",
+          "default": "en_US-ljspeech-high",
           "enum": [
+            "en_US-ljspeech-high",
             "es_AR-daniela-high",
             "es_ES-mls_10246-low",
             "es_MX-claude-high",
-            "en_US-ljspeech-high",
             "en_GB-cori-high",
             "pt_BR-faber-medium",
             "fr_FR-siwis-medium",
@@ -81,10 +81,10 @@
             "it_IT-paola-medium"
           ],
           "enumDescriptions": [
+            "English (USA) - LJ Speech High (Default)",
             "Spanish (Argentina) - Daniela High",
             "Spanish (Spain) - MLS Female",
             "Spanish (Mexico) - Claude High",
-            "English (USA) - LJ Speech High",
             "English (UK) - Cori High",
             "Portuguese (Brazil) - Faber Medium",
             "French (France) - Siwis Medium",
@@ -96,7 +96,7 @@
         "valentinia.speed": {
           "type": "number",
           "default": 0.85,
-          "description": "Speech synthesis speed rate (0.75 = muy pausada, 0.85 = narradora de estudio 24kHz (default), 0.95 = estándar, 1.05 = rápida)."
+          "description": "Speech synthesis speed rate (0.75 = relaxed, 0.85 = studio narrator 24kHz (default), 0.95 = standard, 1.05 = fast)."
         },
         "valentinia.notifyOnTaskCompletion": {
           "type": "boolean",

@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.commands.registerCommand('valentinia.testVoice', async () => {
             const config = vscode.workspace.getConfiguration('valentinia');
-            const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+            const voiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
             const speed = config.get<number>('speed', 0.85);
             const voiceInfo = VOICE_CATALOG[voiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
 
@@ -85,7 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function showQuickSettingsMenu() {
     const config = vscode.workspace.getConfiguration('valentinia');
-    const currentVoiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+    const currentVoiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
     const currentSpeed = config.get<number>('speed', 0.85);
     const voiceInfo = VOICE_CATALOG[currentVoiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
 
@@ -129,7 +129,7 @@ async function showQuickSettingsMenu() {
 
 async function showVoicePickerMenu() {
     const config = vscode.workspace.getConfiguration('valentinia');
-    const currentVoiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+    const currentVoiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
 
     const items: vscode.QuickPickItem[] = Object.values(VOICE_CATALOG).map(v => ({
         label: v.label,
@@ -215,7 +215,7 @@ function setupTranscriptWatcher() {
                                 const responseText = data.content.trim();
                                 if (responseText && responseText !== lastSpokenContent) {
                                     lastSpokenContent = responseText;
-                                    const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+                                    const voiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
                                     const speed = config.get<number>('speed', 0.85);
                                     await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
                                 }

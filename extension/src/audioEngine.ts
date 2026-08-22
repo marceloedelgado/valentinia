@@ -3,20 +3,21 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { spawn, execSync, ChildProcess } from 'child_process';
 import { VOICE_CATALOG } from './voiceCatalog';
+import { NativeProvisioner } from './provisioner';
 
 export class NativeAudioEngine {
     private baseDir: string;
-    private venvBin: string;
     private voicesDir: string;
     private tempDir: string;
     private activePiperProcess: ChildProcess | null = null;
     private activePlayerProcess: ChildProcess | null = null;
+    private provisioner: NativeProvisioner;
 
     constructor() {
         this.baseDir = path.join(os.homedir(), '.valentinIA');
-        this.venvBin = path.join(this.baseDir, 'venv', 'bin');
         this.voicesDir = path.join(this.baseDir, 'voices');
         this.tempDir = path.join(this.baseDir, 'temp');
+        this.provisioner = new NativeProvisioner();
 
         if (!fs.existsSync(this.tempDir)) {
             fs.mkdirSync(this.tempDir, { recursive: true });
@@ -61,12 +62,15 @@ export class NativeAudioEngine {
         }
     }
 
-    public speak(text: string, voiceKey: string = 'es_AR-daniela-high', speed: number = 0.85): Promise<void> {
-        return new Promise((resolve) => {
+    public speak(text: string, voiceKey: string = 'en_US-ljspeech-high', speed: number = 0.85): Promise<void> {
+        return new Promise(async (resolve) => {
             this.stop();
 
-            const piperBin = path.join(this.venvBin, 'piper');
-            if (!fs.existsSync(piperBin)) {
+            // Ensure binary and target voice model are provisioned
+            const status = await this.provisioner.ensureProvisioned(voiceKey);
+            const piperBin = status.piperBinary;
+
+            if (!piperBin || !fs.existsSync(piperBin)) {
                 resolve();
                 return;
             }

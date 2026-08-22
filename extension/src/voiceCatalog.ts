@@ -5,6 +5,11 @@ export interface VoiceModel {
 }
 
 export const VOICE_CATALOG: Record<string, VoiceModel> = {
+    "en_US-ljspeech-high": {
+        key: "en_US-ljspeech-high",
+        label: "English (USA) - LJ Speech High (Default)",
+        sampleText: "Hi, I'm valentinIA. You can change my language anytime."
+    },
     "es_AR-daniela-high": {
         key: "es_AR-daniela-high",
         label: "Spanish (Argentina) - Daniela High",
@@ -19,11 +24,6 @@ export const VOICE_CATALOG: Record<string, VoiceModel> = {
         key: "es_MX-claude-high",
         label: "Spanish (Mexico) - Claude High",
         sampleText: "Hola, la ejecución ha finalizado exitosamente."
-    },
-    "en_US-ljspeech-high": {
-        key: "en_US-ljspeech-high",
-        label: "English (USA) - LJ Speech High",
-        sampleText: "Hello, valentinIA native IDE extension is active and ready."
     },
     "en_GB-cori-high": {
         key: "en_GB-cori-high",
