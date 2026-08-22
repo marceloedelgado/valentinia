@@ -225,26 +225,33 @@ class SetupWizard:
                     pass
 
     def save_env_config(self, voice_key: str) -> None:
-        env_file = ".env"
-        lines = []
-        if os.path.exists(env_file):
-            with open(env_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
+        target_files = [".env", os.path.expanduser("~/.valentinIA/.env")]
+        for env_file in target_files:
+            lines = []
+            if os.path.exists(env_file):
+                try:
+                    with open(env_file, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                except Exception:
+                    lines = []
 
-        new_lines = []
-        voice_updated = False
-        for line in lines:
-            if line.startswith("DEFAULT_VOICE="):
+            new_lines = []
+            voice_updated = False
+            for line in lines:
+                if line.startswith("DEFAULT_VOICE="):
+                    new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
+                    voice_updated = True
+                else:
+                    new_lines.append(line)
+
+            if not voice_updated:
                 new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
-                voice_updated = True
-            else:
-                new_lines.append(line)
 
-        if not voice_updated:
-            new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
-
-        with open(env_file, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
+            try:
+                with open(env_file, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
+            except Exception:
+                pass
 
         print(f"\nConfiguration saved. Active voice: {voice_key}")
 
