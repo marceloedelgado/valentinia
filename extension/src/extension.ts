@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native IDE Transcript Watcher (Final Response Only - Collision Free)
+    // 3. Register Native IDE Transcript Watcher (Ultra-fast 150ms Instant Recitation)
     setupTranscriptWatcher();
 
     // 4. Register Native IDE Lifecycle Event Hooks
@@ -248,7 +248,8 @@ function setupTranscriptWatcher() {
         } catch {}
     };
 
-    pollInterval = setInterval(checkFinalResponseOnly, 1000);
+    // Ultra-fast 150ms interval for near-instantaneous speech playback as soon as text renders!
+    pollInterval = setInterval(checkFinalResponseOnly, 150);
 }
 
 function cleanMarkdownForSpeech(text: string): string {
