@@ -40,7 +40,7 @@ class AudioEngine:
         return os.getenv("SILENT_MODE", "false").lower() in ("true", "1", "yes")
 
     def get_default_voice(self) -> str:
-        return os.getenv("DEFAULT_VOICE", "es_AR-daniela-high")
+        return os.getenv("DEFAULT_VOICE", "en_US-amy-medium")
 
     def get_default_speed(self) -> float:
         try:
@@ -138,7 +138,7 @@ class AudioEngine:
 
         model_path = os.path.join(self.voices_dir, f"{voice_name}.onnx")
         if not os.path.exists(model_path):
-            model_path = os.path.join(self.voices_dir, "es_AR-daniela-high.onnx")
+            model_path = os.path.join(self.voices_dir, "en_US-amy-medium.onnx")
             if not os.path.exists(model_path):
                 return None
 

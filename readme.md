@@ -77,7 +77,7 @@ Add the following configuration to your MCP client settings (e.g., Antigravity o
       "env": {
         "READ_MODE": "events",
         "SILENT_MODE": "false",
-        "DEFAULT_VOICE": "es_AR-daniela-high",
+        "DEFAULT_VOICE": "en_US-amy-medium",
         "DEFAULT_SPEED": "1.0"
       }
     }
