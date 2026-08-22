@@ -71,7 +71,7 @@
           "default": "es_AR-daniela-high",
           "enum": [
             "es_AR-daniela-high",
-            "es_ES-sharvard-medium",
+            "es_ES-mls_10246-low",
             "es_MX-claude-high",
             "en_US-ljspeech-high",
             "en_GB-cori-high",
@@ -82,7 +82,7 @@
           ],
           "enumDescriptions": [
             "Spanish (Argentina) - Daniela High",
-            "Spanish (Spain) - Sharvard Medium",
+            "Spanish (Spain) - MLS Female",
             "Spanish (Mexico) - Claude High",
             "English (USA) - LJ Speech High",
             "English (UK) - Cori High",
