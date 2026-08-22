@@ -213,11 +213,6 @@ class AudioEngine:
                 if self.get_silent_mode():
                     continue
 
-                if task.status:
-                    sfx_path = os.path.join(self.sfx_dir, f"{task.status}.wav")
-                    if os.path.exists(sfx_path):
-                        self._play_file(sfx_path)
-
                 if task.message and task.message.strip():
                     voice = task.voice or self.get_default_voice()
                     speed = task.speed if task.speed is not None else self.get_default_speed()
