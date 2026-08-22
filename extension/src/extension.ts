@@ -42,11 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('valentinia.testVoice', async () => {
             const config = vscode.workspace.getConfiguration('valentinia');
             const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 1.0);
+            const speed = config.get<number>('speed', 0.9);
             const voiceInfo = VOICE_CATALOG[voiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
 
             vscode.window.showInformationMessage(`Testing valentinIA voice: ${voiceInfo.label}...`);
-            await audioEngine.speak(voiceInfo.sampleText, voiceKey, speed);
+            await audioEngine.speak(cleanMarkdownForSpeech(voiceInfo.sampleText), voiceKey, speed);
         })
     );
 
@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 1.0);
+            const speed = config.get<number>('speed', 0.9);
             const taskName = event.execution.task.name;
 
             if (event.exitCode === 0) {
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 1.0);
+            const speed = config.get<number>('speed', 0.9);
             await audioEngine.speak(`La sesión de depuración ${session.name} ha finalizado.`, voiceKey, speed);
         })
     );
@@ -119,7 +119,7 @@ function setupTranscriptWatcher() {
                     if (message && message !== lastSpokenContent) {
                         lastSpokenContent = message;
                         const voiceKey = payload.voice || config.get<string>('voice', 'es_AR-daniela-high');
-                        const speed = payload.speed || config.get<number>('speed', 1.0);
+                        const speed = payload.speed || config.get<number>('speed', 0.9);
                         try {
                             fs.unlinkSync(requestFile);
                         } catch {}
@@ -159,7 +159,7 @@ function setupTranscriptWatcher() {
                                 if (responseText && responseText !== lastSpokenContent) {
                                     lastSpokenContent = responseText;
                                     const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-                                    const speed = config.get<number>('speed', 1.0);
+                                    const speed = config.get<number>('speed', 0.9);
                                     await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
                                 }
                                 break;
@@ -176,13 +176,15 @@ function setupTranscriptWatcher() {
 
 function cleanMarkdownForSpeech(text: string): string {
     return text
-        .replace(/```[\s\S]*?```/g, ' [bloque de código omitido] ') // Skip long code blocks in speech
+        .replace(/```[\s\S]*?```/g, ' [bloque de código omitido] ') // Skip long code blocks
         .replace(/`([^`]+)`/g, '$1') // Inline code
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // Strip Emojis
         .replace(/^#+\s+/gm, '') // Headers
         .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
         .replace(/\*([^*]+)\*/g, '$1') // Italic
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
         .replace(/^[\s*-]+\s+/gm, '') // Bullet points
+        .replace(/\s+/g, ' ') // Normalize spaces
         .trim();
 }
 

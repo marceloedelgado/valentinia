@@ -80,8 +80,8 @@
         },
         "valentinia.speed": {
           "type": "number",
-          "default": 1.0,
-          "description": "Speech synthesis speed multiplier (e.g. 1.0 for normal, 1.2 for faster)."
+          "default": 0.9,
+          "description": "Speech synthesis speed rate (0.85 = relaxed/slow, 0.9 = natural studio narrator (default), 1.0 = normal, 1.1 = fast)."
         },
         "valentinia.notifyOnTaskCompletion": {
           "type": "boolean",
