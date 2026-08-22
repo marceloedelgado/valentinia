@@ -12,6 +12,7 @@ export class NativeAudioEngine {
     private activePiperProcess: ChildProcess | null = null;
     private activePlayerProcess: ChildProcess | null = null;
     private provisioner: NativeProvisioner;
+    private cachedPiperBin: string | null = null;
 
     constructor() {
         this.baseDir = path.join(os.homedir(), '.valentinIA');
@@ -22,6 +23,8 @@ export class NativeAudioEngine {
         if (!fs.existsSync(this.tempDir)) {
             fs.mkdirSync(this.tempDir, { recursive: true });
         }
+
+        this.cachedPiperBin = this.provisioner.getExecutablePath();
     }
 
     private resolveAudioPlayer(): string[] | null {
@@ -62,15 +65,23 @@ export class NativeAudioEngine {
         }
     }
 
+    public getPiperBinary(): string | null {
+        if (!this.cachedPiperBin || !fs.existsSync(this.cachedPiperBin)) {
+            this.cachedPiperBin = this.provisioner.getExecutablePath();
+        }
+        return this.cachedPiperBin;
+    }
+
     public speak(text: string, voiceKey: string = 'en_US-ljspeech-high', speed: number = 0.85): Promise<void> {
-        return new Promise(async (resolve) => {
+        return new Promise((resolve) => {
             this.stop();
 
-            // Ensure binary and target voice model are provisioned
-            const status = await this.provisioner.ensureProvisioned(voiceKey);
-            const piperBin = status.piperBinary;
-
+            const piperBin = this.getPiperBinary();
             if (!piperBin || !fs.existsSync(piperBin)) {
+                // Trigger background provisioning if binary is missing
+                this.provisioner.ensureProvisioned(voiceKey).then((status) => {
+                    this.cachedPiperBin = status.piperBinary;
+                }).catch(() => {});
                 resolve();
                 return;
             }
@@ -82,6 +93,8 @@ export class NativeAudioEngine {
                     if (installed.length > 0) {
                         modelPath = path.join(this.voicesDir, installed[0]);
                     } else {
+                        // Background download missing model
+                        this.provisioner.downloadVoiceModel(voiceKey).catch(() => {});
                         resolve();
                         return;
                     }
