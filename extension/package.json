@@ -1,0 +1,108 @@
+{
+  "name": "valentinia-extension",
+  "displayName": "valentinIA - Native Voice Assistant",
+  "description": "Zero-token native IDE voice assistant for local task completion and status notifications.",
+  "version": "1.0.0",
+  "publisher": "valentinia",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marceloedelgado/valentinia.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other",
+    "Accessibility"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "valentinia.enable",
+        "title": "valentinIA: Activate Voice Output",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.disable",
+        "title": "valentinIA: Mute Voice Output",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.toggle",
+        "title": "valentinIA: Toggle Mute / Active",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.testVoice",
+        "title": "valentinIA: Test Current Voice Sample",
+        "category": "valentinIA"
+      }
+    ],
+    "configuration": {
+      "title": "valentinIA",
+      "properties": {
+        "valentinia.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable native voice notifications."
+        },
+        "valentinia.voice": {
+          "type": "string",
+          "default": "es_AR-daniela-high",
+          "enum": [
+            "es_AR-daniela-high",
+            "es_ES-sharvard-medium",
+            "es_MX-claude-high",
+            "en_US-ljspeech-high",
+            "en_GB-cori-high",
+            "pt_BR-faber-medium",
+            "fr_FR-siwis-medium",
+            "de_DE-kerstin-low",
+            "it_IT-paola-medium"
+          ],
+          "enumDescriptions": [
+            "Spanish (Argentina) - Daniela High",
+            "Spanish (Spain) - Sharvard Medium",
+            "Spanish (Mexico) - Claude High",
+            "English (USA) - LJ Speech High",
+            "English (UK) - Cori High",
+            "Portuguese (Brazil) - Faber Medium",
+            "French (France) - Siwis Medium",
+            "German (Germany) - Kerstin Low",
+            "Italian (Italy) - Paola Medium"
+          ],
+          "description": "Default regional female voice model for speech synthesis."
+        },
+        "valentinia.speed": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Speech synthesis speed multiplier (e.g. 1.0 for normal, 1.2 for faster)."
+        },
+        "valentinia.notifyOnTaskCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play audible voice notification when a terminal task finishes execution."
+        },
+        "valentinia.notifyOnDebugTermination": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play audible voice notification when a debug session terminates."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  }
+}

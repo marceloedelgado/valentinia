@@ -118,6 +118,26 @@ To ensure your AI agent proactively uses **valentinIA**, add a rule to your work
 - Keep spoken text concise and clear.
 ```
 
+## 🎨 Phase 2: Native IDE Extension (Zero-Token Consumption)
+
+The **valentinIA Native Extension** (`extension/`) runs natively inside Node.js/TypeScript within your IDE process.
+
+### Features
+- **0 Token Consumption:** Operates natively in Node.js/TypeScript inside the IDE. No LLM prompt context or tokens used.
+- **Deterministic Lifecycle Event Hooks:**
+  - `onDidEndTaskProcess`: Plays voice notifications when terminal tasks, builds, or scripts finish.
+  - `onDidTerminateDebugSession`: Plays voice notifications when debug sessions end.
+- **1-Click Status Bar Item:** Shows `🗣️ valentinIA: Active` or `🤫 valentinIA: Muted` to toggle voice output with 1 click.
+- **Local Audio Engine:** Spawns local `piper` child processes directly without web APIs or cloud subscriptions.
+
+### Extension Setup & Build
+
+```bash
+cd extension
+npm install
+npm run compile
+```
+
 ## 🤝 Contributing
 valentinIA is an open-source initiative and we welcome contributions from the global developer community! 
 Whether you want to add new Piper voice models, optimize the asynchronous queue, fix bugs, or improve compatibility with more MCP clients, your PRs are highly appreciated.
