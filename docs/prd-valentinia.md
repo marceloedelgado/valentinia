@@ -17,7 +17,7 @@ The tool enables audible notifications for task start/completion, error reportin
 
 ## 3. Core Features & Specifications
 * **Voice Management & Persona Standard:**
-  - **Exclusively Female Voice Models:** All voice models integrated and configured across all supported languages and regional accents (e.g., Spanish-Argentina `es_AR-sharvard-medium`, Spanish-Spain `es_ES-sharvard-medium`, Portuguese-Brazil `pt_BR-faber-medium`, English `en_US-amy-medium`) must strictly be **female voices**.
+  - **Exclusively Female Voice Models:** All voice models integrated and configured across all supported languages and regional accents (e.g., Spanish-Argentina `es_AR-daniela-high`, Spanish-Spain `es_ES-sharvard-medium`, Portuguese-Brazil `pt_BR-faber-medium`, English `en_US-amy-medium`) must strictly be **female voices**.
   - The `speak_status` tool accepts language (`language`), female voice model key (`voice`), and reading speed (`speed`).
 * **MCP Tools:**
   1. `speak_status`: Accepts notification message (`message`), event state (`status`), language (`language`), voice model key (`voice`), and reading speed multiplier (`speed`).
