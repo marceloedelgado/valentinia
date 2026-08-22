@@ -4,6 +4,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { NativeAudioEngine } from './audioEngine';
 import { VOICE_CATALOG } from './voiceCatalog';
+import { WelcomePanel } from './welcomePanel';
 
 let audioEngine: NativeAudioEngine;
 let statusBarItem: vscode.StatusBarItem;
@@ -17,17 +18,55 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. Session Mute Reset (Always start in ACTIVE state on window reload)
     sessionMuted = false;
 
-    // 2. Create Status Bar Item (Direct 1-Click Instant Session Mute Toggle & Audio Kill)
+    // 2. First-Install Onboarding Flow (Zero Surprises / Zero Unwanted Recitation)
+    const hasInstalledBefore = context.globalState.get<boolean>('hasInstalledBefore', false);
+    if (!hasInstalledBefore) {
+        context.globalState.update('hasInstalledBefore', true);
+        markExistingTranscriptAsRead();
+
+        // Recite initial greeting sample
+        setTimeout(async () => {
+            const config = vscode.workspace.getConfiguration('valentinia');
+            const voiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
+            const speed = config.get<number>('speed', 0.85);
+            await audioEngine.speak(cleanMarkdownForSpeech("Hi, I'm valentinIA. You can change my language anytime."), voiceKey, speed);
+        }, 1000);
+
+        // Open Welcome Panel automatically on first install
+        setTimeout(() => {
+            WelcomePanel.show(
+                context.extensionUri,
+                () => updateStatusBar(),
+                (voiceKey, speed) => {
+                    const voiceInfo = VOICE_CATALOG[voiceKey] || VOICE_CATALOG['en_US-ljspeech-high'];
+                    audioEngine.speak(cleanMarkdownForSpeech(voiceInfo.sampleText), voiceKey, speed);
+                }
+            );
+        }, 1500);
+    }
+
+    // 3. Create Status Bar Item (Direct 1-Click Instant Session Mute Toggle & Audio Kill)
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'valentinia.toggle';
     updateStatusBar();
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
-    // 3. Register Commands
+    // 4. Register Commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('valentinia.welcome', () => {
+            WelcomePanel.show(
+                context.extensionUri,
+                () => updateStatusBar(),
+                (voiceKey, speed) => {
+                    const voiceInfo = VOICE_CATALOG[voiceKey] || VOICE_CATALOG['en_US-ljspeech-high'];
+                    audioEngine.speak(cleanMarkdownForSpeech(voiceInfo.sampleText), voiceKey, speed);
+                }
+            );
+        }),
+
         vscode.commands.registerCommand('valentinia.menu', async () => {
-            showQuickSettingsMenu();
+            showQuickSettingsMenu(context);
         }),
 
         vscode.commands.registerCommand('valentinia.selectVoice', async () => {
@@ -70,10 +109,10 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 4. Register Isolated Native Transcript Watcher (Host & Workspace Isolated)
+    // 5. Register Isolated Native Transcript Watcher
     setupTranscriptWatcher();
 
-    // 5. Configuration Change Listener
+    // 6. Configuration Change Listener
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('valentinia')) {
@@ -83,7 +122,83 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-async function showQuickSettingsMenu() {
+function markExistingTranscriptAsRead() {
+    try {
+        const appName = vscode.env.appName || '';
+        const isAntigravity = appName.toLowerCase().includes('antigravity');
+
+        let latestFile: string | null = null;
+        let latestMtime = 0;
+
+        if (isAntigravity) {
+            const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
+            if (fs.existsSync(brainDir)) {
+                const convDirs = fs.readdirSync(brainDir);
+                for (const conv of convDirs) {
+                    const transcriptPath = path.join(brainDir, conv, '.system_generated', 'logs', 'transcript.jsonl');
+                    if (fs.existsSync(transcriptPath)) {
+                        const stat = fs.statSync(transcriptPath);
+                        if (stat.mtimeMs > latestMtime) {
+                            latestMtime = stat.mtimeMs;
+                            latestFile = transcriptPath;
+                        }
+                    }
+                }
+            }
+        } else {
+            const claudeProjectsDir = path.join(os.homedir(), '.claude', 'projects');
+            if (fs.existsSync(claudeProjectsDir)) {
+                const scanDir = (dir: string) => {
+                    const entries = fs.readdirSync(dir);
+                    for (const entry of entries) {
+                        const fullPath = path.join(dir, entry);
+                        try {
+                            const stat = fs.statSync(fullPath);
+                            if (stat.isDirectory()) {
+                                scanDir(fullPath);
+                            } else if (entry.endsWith('.jsonl')) {
+                                if (stat.mtimeMs > latestMtime) {
+                                    latestMtime = stat.mtimeMs;
+                                    latestFile = fullPath;
+                                }
+                            }
+                        } catch {}
+                    }
+                };
+                scanDir(claudeProjectsDir);
+            }
+        }
+
+        if (latestFile) {
+            const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
+            for (let i = lines.length - 1; i >= 0; i--) {
+                try {
+                    const data = JSON.parse(lines[i]);
+                    let responseText: string | null = null;
+                    if (data.type === 'PLANNER_RESPONSE' && data.content) {
+                        responseText = data.content.trim();
+                    } else if (data.type === 'assistant' || data.role === 'assistant' || data.message?.role === 'assistant') {
+                        const msgContent = data.message?.content || data.content;
+                        if (typeof msgContent === 'string') {
+                            responseText = msgContent.trim();
+                        } else if (Array.isArray(msgContent)) {
+                            const textBlocks = msgContent.filter((b: any) => b.type === 'text' && b.text);
+                            if (textBlocks.length > 0) {
+                                responseText = textBlocks.map((b: any) => b.text).join('\n\n').trim();
+                            }
+                        }
+                    }
+                    if (responseText) {
+                        lastSpokenContent = responseText;
+                        break;
+                    }
+                } catch {}
+            }
+        }
+    } catch {}
+}
+
+async function showQuickSettingsMenu(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('valentinia');
     const currentVoiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
     const currentSpeed = config.get<number>('speed', 0.85);
@@ -93,6 +208,10 @@ async function showQuickSettingsMenu() {
         {
             label: !sessionMuted ? '$(mute) Mute Voice Output' : '$(unmute) Activate Voice Output',
             description: !sessionMuted ? 'Currently: ACTIVE' : 'Currently: MUTED'
+        },
+        {
+            label: '$(layout) Open Welcome & Settings Webview Page',
+            description: 'Interactive visual setup panel'
         },
         {
             label: '$(unmute) Select Regional Voice Model',
@@ -118,6 +237,8 @@ async function showQuickSettingsMenu() {
 
     if (selection.label.includes('Mute') || selection.label.includes('Activate')) {
         vscode.commands.executeCommand('valentinia.toggle');
+    } else if (selection.label.includes('Open Welcome & Settings')) {
+        vscode.commands.executeCommand('valentinia.welcome');
     } else if (selection.label.includes('Select Regional Voice')) {
         showVoicePickerMenu();
     } else if (selection.label.includes('Adjust Speech Rate')) {
