@@ -36,20 +36,20 @@ echo "📦 Installing Python dependencies (mcp, piper-tts, python-dotenv)..."
 "$VENV_DIR/bin/pip" install --upgrade pip --quiet
 "$VENV_DIR/bin/pip" install mcp piper-tts python-dotenv --quiet
 
-# 5. Download default voice model (es_ES-davefx-medium)
-VOICE_NAME="es_ES-davefx-medium"
+# 5. Download default female voice model (es_ES-sharvard-medium)
+VOICE_NAME="es_ES-sharvard-medium"
 VOICE_ONNX="$VOICES_DIR/$VOICE_NAME.onnx"
 VOICE_JSON="$VOICES_DIR/$VOICE_NAME.onnx.json"
 
 if [ ! -f "$VOICE_ONNX" ] || [ ! -f "$VOICE_JSON" ]; then
-    echo "🎙️  Downloading default Piper voice model ($VOICE_NAME)..."
-    BASE_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/davefx/medium"
+    echo "🎙️  Downloading default female Piper voice model ($VOICE_NAME)..."
+    BASE_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/sharvard/medium"
     
-    curl -L --progress-bar "$BASE_URL/es_ES-davefx-medium.onnx" -o "$VOICE_ONNX"
-    curl -L --progress-bar "$BASE_URL/es_ES-davefx-medium.onnx.json" -o "$VOICE_JSON"
-    echo "✅ Voice model downloaded successfully."
+    curl -L --progress-bar "$BASE_URL/es_ES-sharvard-medium.onnx" -o "$VOICE_ONNX"
+    curl -L --progress-bar "$BASE_URL/es_ES-sharvard-medium.onnx.json" -o "$VOICE_JSON"
+    echo "✅ Female voice model downloaded successfully."
 else
-    echo "🎙️  Voice model $VOICE_NAME is already present."
+    echo "🎙️  Female voice model $VOICE_NAME is already present."
 fi
 
 # 6. Generate synthesized SFX WAV notification tones locally
@@ -111,7 +111,7 @@ if [ ! -f ".env" ]; then
     cat << 'EOF' > .env
 READ_MODE=events
 SILENT_MODE=false
-DEFAULT_VOICE=es_ES-davefx-medium
+DEFAULT_VOICE=es_ES-sharvard-medium
 DEFAULT_SPEED=1.0
 EOF
 fi

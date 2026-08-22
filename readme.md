@@ -14,8 +14,10 @@
 
 Instead of staring at the terminal waiting for long tasks (migrations, tests, builds) to finish, valentinIA notifies you audibly with system chimes and human-like text-to-speech.
 
-## 🧠 Powered by Piper TTS (Open Source)
-valentinIA integrates exclusively with **[piper-tts](https://github.com/rhasspy/piper)**, an ultra-fast, completely open-source neural text-to-speech engine. It runs locally using ONNX models, ensuring zero latency, zero API costs, and absolute privacy. 
+## 🧠 Powered by Piper TTS (Female Voice Standard)
+valentinIA integrates exclusively with **[piper-tts](https://github.com/rhasspy/piper)**, an ultra-fast, completely open-source neural text-to-speech engine. 
+
+> 👩 **Voice Persona Standard:** All default and supported voice models in valentinIA are **exclusively female voices** across all regional accents and languages (e.g., `es_ES-sharvard-medium`, `es_AR-sharvard-medium`, `pt_BR-faber-medium`, `en_US-amy-medium`). It runs locally using ONNX models, ensuring zero latency, zero API costs, and absolute privacy. 
 
 ## 🤖 LLM Agnostic
 valentinIA is **100% model and AI provider agnostic**. As long as your model supports Tool Calling/Function Calling, it works perfectly.
@@ -75,7 +77,7 @@ Add the following configuration to your MCP client settings (e.g., Antigravity o
       "env": {
         "READ_MODE": "events",
         "SILENT_MODE": "false",
-        "DEFAULT_VOICE": "es_ES-davefx-medium",
+        "DEFAULT_VOICE": "es_ES-sharvard-medium",
         "DEFAULT_SPEED": "1.0"
       }
     }
