@@ -37,7 +37,31 @@ class AudioEngine:
         self._worker_thread.start()
 
     def get_silent_mode(self) -> bool:
+        for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("SILENT_MODE="):
+                                val = line.split("=", 1)[1].strip().lower()
+                                return val in ("true", "1", "yes")
+                except Exception:
+                    pass
         return os.getenv("SILENT_MODE", "false").lower() in ("true", "1", "yes")
+
+    def get_read_mode(self) -> str:
+        for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("READ_MODE="):
+                                val = line.split("=", 1)[1].strip()
+                                if val:
+                                    return val
+                except Exception:
+                    pass
+        return os.getenv("READ_MODE", "events")
 
     def get_default_voice(self) -> str:
         for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
@@ -198,11 +222,6 @@ class AudioEngine:
             try:
                 if self.get_silent_mode():
                     continue
-
-                if task.status:
-                    sfx_path = os.path.join(self.sfx_dir, f"{task.status}.wav")
-                    if os.path.exists(sfx_path):
-                        self._play_file(sfx_path)
 
                 if task.message and task.message.strip():
                     voice = task.voice or self.get_default_voice()

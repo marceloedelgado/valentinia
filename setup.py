@@ -4,8 +4,7 @@ import sys
 import json
 import shutil
 import subprocess
-import urllib.request
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, List
 
 
 VOICE_MAP = {
@@ -131,6 +130,51 @@ class SetupWizard:
             except Exception:
                 self.catalog = {}
 
+    def get_silent_mode(self) -> bool:
+        for env_file in [".env", os.path.expanduser("~/.valentinIA/.env")]:
+            if os.path.exists(env_file):
+                try:
+                    with open(env_file, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("SILENT_MODE="):
+                                return line.split("=", 1)[1].strip().lower() in ("true", "1", "yes")
+                except Exception:
+                    pass
+        return False
+
+    def set_silent_mode(self, silent: bool) -> None:
+        val_str = "true" if silent else "false"
+        target_files = [".env", os.path.expanduser("~/.valentinIA/.env")]
+        for env_file in target_files:
+            lines = []
+            if os.path.exists(env_file):
+                try:
+                    with open(env_file, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                except Exception:
+                    lines = []
+
+            new_lines = []
+            updated = False
+            for line in lines:
+                if line.startswith("SILENT_MODE="):
+                    new_lines.append(f"SILENT_MODE={val_str}\n")
+                    updated = True
+                else:
+                    new_lines.append(line)
+
+            if not updated:
+                new_lines.append(f"SILENT_MODE={val_str}\n")
+
+            try:
+                with open(env_file, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
+            except Exception:
+                pass
+
+        status_txt = "MUTED (silent)" if silent else "UNMUTED (active)"
+        print(f"\nvalentinIA voice output is now {status_txt}.")
+
     def resolve_audio_player(self) -> Optional[list[str]]:
         if sys.platform == "darwin":
             if shutil.which("afplay"):
@@ -224,7 +268,7 @@ class SetupWizard:
                 except OSError:
                     pass
 
-    def save_env_config(self, voice_key: str) -> None:
+    def save_env_config(self, voice_key: Optional[str] = None, read_mode: Optional[str] = None) -> None:
         target_files = [".env", os.path.expanduser("~/.valentinIA/.env")]
         for env_file in target_files:
             lines = []
@@ -237,15 +281,22 @@ class SetupWizard:
 
             new_lines = []
             voice_updated = False
+            mode_updated = False
+
             for line in lines:
-                if line.startswith("DEFAULT_VOICE="):
+                if voice_key and line.startswith("DEFAULT_VOICE="):
                     new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
                     voice_updated = True
+                elif read_mode and line.startswith("READ_MODE="):
+                    new_lines.append(f"READ_MODE={read_mode}\n")
+                    mode_updated = True
                 else:
                     new_lines.append(line)
 
-            if not voice_updated:
+            if voice_key and not voice_updated:
                 new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
+            if read_mode and not mode_updated:
+                new_lines.append(f"READ_MODE={read_mode}\n")
 
             try:
                 with open(env_file, "w", encoding="utf-8") as f:
@@ -253,7 +304,90 @@ class SetupWizard:
             except Exception:
                 pass
 
-        print(f"\nConfiguration saved. Active voice: {voice_key}")
+        if voice_key:
+            print(f"\nConfiguration saved. Active voice: {voice_key}")
+        if read_mode:
+            print(f"\nConfiguration saved. Active reading mode: {read_mode}")
+
+    def auto_configure_ides(self) -> None:
+        home = os.path.expanduser("~")
+        cwd = os.getcwd()
+        python_bin = os.path.join(self.base_dir, "venv", "bin", "python")
+        server_py = os.path.join(cwd, "server.py")
+
+        mcp_block = {
+            "command": python_bin,
+            "args": [server_py],
+            "env": {
+                "READ_MODE": "events",
+                "SILENT_MODE": "false",
+            },
+        }
+
+        ide_configs = [
+            ("Antigravity IDE", os.path.join(home, ".gemini", "antigravity-ide", "mcp_config.json")),
+            ("Workspace (.agents)", os.path.join(cwd, ".agents", "mcp_config.json")),
+            ("Claude Desktop/Code", os.path.join(home, ".claude.json")),
+            ("Claude Desktop (macOS)", os.path.join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")),
+            ("Roo Code / VS Code", os.path.join(home, "Library", "Application Support", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline", "settings", "mcp_settings.json")),
+            ("Cursor IDE", os.path.join(home, ".cursor", "mcp.json")),
+        ]
+
+        print("\nAuto-configuring AI IDE environments...")
+        print("--------------------------------------------------")
+
+        configured_count = 0
+        for name, config_path in ide_configs:
+            parent_dir = os.path.dirname(config_path)
+
+            try:
+                os.makedirs(parent_dir, exist_ok=True)
+
+                data = {}
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        try:
+                            data = json.load(f)
+                        except Exception:
+                            data = {}
+
+                if "mcpServers" not in data or not isinstance(data["mcpServers"], dict):
+                    data["mcpServers"] = {}
+
+                data["mcpServers"]["valentinIA"] = mcp_block
+
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+
+                print(f"  ✅ Configured {name}: {config_path}")
+                configured_count += 1
+            except Exception as e:
+                print(f"  ⚠️  Failed to configure {name}: {e}")
+
+        # Write workspace rules template
+        workspace_rule = os.path.join(cwd, ".agents", "rules", "valentinIA.md")
+        os.makedirs(os.path.dirname(workspace_rule), exist_ok=True)
+        rule_content = (
+            "# Voice Notifications Rule (valentinIA)\n\n"
+            "- Call `speak_status` with `status=\"start\"` when initiating tasks.\n"
+            "- Call `speak_status` with `status=\"success\"` upon completing tasks.\n"
+            "- Call `speak_status` with `status=\"error\"` or `status=\"human_input_required\"` if blocked.\n"
+            "- Always use clear, natural Spanish for spoken messages.\n"
+        )
+        with open(workspace_rule, "w", encoding="utf-8") as f:
+            f.write(rule_content)
+        print(f"  ✅ Configured Agent Rule: {workspace_rule}")
+
+        print(f"\nAuto-configuration completed ({configured_count} IDE configuration(s) updated).")
+
+    def prompt_reading_mode(self) -> None:
+        print("\nReading Mode")
+        print("--------------------------------------------------")
+        print("  1. Events (short notifications) *Default")
+        print("  2. Accessibility (full text responses)")
+        choice = input("\nSelect [1-2]: ").strip() or "1"
+        mode = "accessibility" if choice == "2" else "events"
+        self.save_env_config(read_mode=mode)
 
     def prompt_voice_selection(self, voice_key: str, label: str, sample: str) -> bool:
         print(f"\nTesting {label} voice...")
@@ -261,7 +395,8 @@ class SetupWizard:
 
         choice = input("\nUse this voice? [Y/n]: ").strip().lower()
         if choice in ("", "y", "yes"):
-            self.save_env_config(voice_key)
+            self.save_env_config(voice_key=voice_key)
+            self.prompt_reading_mode()
             return True
         return False
 
@@ -486,7 +621,10 @@ class SetupWizard:
 
     def run(self) -> None:
         while True:
-            print("\nvalentinIA Voice Setup")
+            is_silent = self.get_silent_mode()
+            mute_status = "MUTED" if is_silent else "ACTIVE"
+
+            print("\nvalentinIA Setup")
             print("--------------------------------------------------")
             print("  1. English")
             print("  2. Spanish")
@@ -495,11 +633,14 @@ class SetupWizard:
             print("  5. German")
             print("  6. Italian")
             print("  7. Other languages")
-            print("  8. Cancel")
+            print("  8. Reading Mode")
+            print(f"  9. Toggle Mute (Currently: {mute_status})")
+            print("  10. Auto-configure AI IDEs")
+            print("  11. Cancel")
 
-            choice = input("\nSelect [1-8] (Default 1): ").strip() or "1"
+            choice = input("\nSelect [1-11] (Default 1): ").strip() or "1"
 
-            if choice == "8":
+            if choice == "11":
                 print("Setup cancelled. Retaining current configuration.")
                 sys.exit(0)
             elif choice == "1":
@@ -539,12 +680,34 @@ class SetupWizard:
             elif choice == "7":
                 if self.menu_other_languages():
                     break
+            elif choice == "8":
+                self.prompt_reading_mode()
+                break
+            elif choice == "9":
+                self.set_silent_mode(not is_silent)
+                break
+            elif choice == "10":
+                self.auto_configure_ides()
+                break
 
 
 if __name__ == "__main__":
     wizard = SetupWizard()
-    if len(sys.argv) > 1 and sys.argv[1] in ("-y", "--non-interactive"):
-        wizard.ensure_voice_downloaded("en_US-ljspeech-high")
-        wizard.save_env_config("en_US-ljspeech-high")
-    else:
-        wizard.run()
+    if len(sys.argv) > 1:
+        arg = sys.argv[1].lower()
+        if arg in ("--mute", "-m"):
+            wizard.set_silent_mode(True)
+            sys.exit(0)
+        elif arg in ("--unmute", "-u"):
+            wizard.set_silent_mode(False)
+            sys.exit(0)
+        elif arg in ("--auto-configure", "--auto-ide"):
+            wizard.auto_configure_ides()
+            sys.exit(0)
+        elif arg in ("-y", "--non-interactive"):
+            wizard.ensure_voice_downloaded("en_US-ljspeech-high")
+            wizard.save_env_config(voice_key="en_US-ljspeech-high", read_mode="events")
+            wizard.auto_configure_ides()
+            sys.exit(0)
+
+    wizard.run()
