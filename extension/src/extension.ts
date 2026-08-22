@@ -17,17 +17,14 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. Session Mute Reset (Always start in ACTIVE state on window reload)
     sessionMuted = false;
 
-    // 2. Initialize lastSpokenContent to current latest response (Prevents past logs reciting on startup)
-    initializeLastSpokenContent();
-
-    // 3. Create Status Bar Item (Direct 1-Click Instant Session Mute Toggle & Audio Kill)
+    // 2. Create Status Bar Item (Direct 1-Click Instant Session Mute Toggle & Audio Kill)
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'valentinia.toggle';
     updateStatusBar();
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
-    // 4. Register Commands
+    // 3. Register Commands
     context.subscriptions.push(
         vscode.commands.registerCommand('valentinia.menu', async () => {
             showQuickSettingsMenu();
@@ -73,10 +70,10 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 5. Register Native IDE Transcript Watcher
+    // 4. Register Isolated Native Transcript Watcher (Host & Workspace Isolated)
     setupTranscriptWatcher();
 
-    // 6. Configuration Change Listener
+    // 5. Configuration Change Listener
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('valentinia')) {
@@ -84,41 +81,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
     );
-}
-
-function initializeLastSpokenContent() {
-    try {
-        const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
-        if (fs.existsSync(brainDir)) {
-            const convDirs = fs.readdirSync(brainDir);
-            let latestFile: string | null = null;
-            let latestMtime = 0;
-
-            for (const conv of convDirs) {
-                const transcriptPath = path.join(brainDir, conv, '.system_generated', 'logs', 'transcript.jsonl');
-                if (fs.existsSync(transcriptPath)) {
-                    const stat = fs.statSync(transcriptPath);
-                    if (stat.mtimeMs > latestMtime) {
-                        latestMtime = stat.mtimeMs;
-                        latestFile = transcriptPath;
-                    }
-                }
-            }
-
-            if (latestFile) {
-                const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
-                for (let i = lines.length - 1; i >= 0; i--) {
-                    try {
-                        const data = JSON.parse(lines[i]);
-                        if (data.type === 'PLANNER_RESPONSE' && data.content) {
-                            lastSpokenContent = data.content.trim();
-                            break;
-                        }
-                    } catch {}
-                }
-            }
-        }
-    } catch {}
 }
 
 async function showQuickSettingsMenu() {
@@ -226,47 +188,90 @@ function setupTranscriptWatcher() {
             return;
         }
 
-        try {
-            const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
-            if (fs.existsSync(brainDir)) {
-                const convDirs = fs.readdirSync(brainDir);
-                let latestFile: string | null = null;
-                let latestMtime = 0;
+        const appName = vscode.env.appName || '';
+        const isAntigravity = appName.toLowerCase().includes('antigravity');
 
-                for (const conv of convDirs) {
-                    const transcriptPath = path.join(brainDir, conv, '.system_generated', 'logs', 'transcript.jsonl');
-                    if (fs.existsSync(transcriptPath)) {
-                        const stat = fs.statSync(transcriptPath);
-                        if (stat.mtimeMs > latestMtime) {
-                            latestMtime = stat.mtimeMs;
-                            latestFile = transcriptPath;
+        try {
+            let latestFile: string | null = null;
+            let latestMtime = 0;
+
+            if (isAntigravity) {
+                // 1. Antigravity IDE Isolated Logs
+                const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
+                if (fs.existsSync(brainDir)) {
+                    const convDirs = fs.readdirSync(brainDir);
+                    for (const conv of convDirs) {
+                        const transcriptPath = path.join(brainDir, conv, '.system_generated', 'logs', 'transcript.jsonl');
+                        if (fs.existsSync(transcriptPath)) {
+                            const stat = fs.statSync(transcriptPath);
+                            if (stat.mtimeMs > latestMtime) {
+                                latestMtime = stat.mtimeMs;
+                                latestFile = transcriptPath;
+                            }
                         }
                     }
                 }
-
-                if (latestFile) {
-                    const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
-                    for (let i = lines.length - 1; i >= 0; i--) {
-                        try {
-                            const data = JSON.parse(lines[i]);
-                            if (data.type === 'PLANNER_RESPONSE' && data.content) {
-                                const responseText = data.content.trim();
-                                if (responseText && responseText !== lastSpokenContent) {
-                                    lastSpokenContent = responseText;
-                                    const voiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
-                                    const speed = config.get<number>('speed', 0.85);
-                                    await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
+            } else {
+                // 2. VS Code Isolated Logs (Claude Code CLI / VS Code Storage)
+                const claudeProjectsDir = path.join(os.homedir(), '.claude', 'projects');
+                if (fs.existsSync(claudeProjectsDir)) {
+                    const projectDirs = fs.readdirSync(claudeProjectsDir);
+                    for (const projDir of projectDirs) {
+                        const fullProjDir = path.join(claudeProjectsDir, projDir);
+                        if (fs.statSync(fullProjDir).isDirectory()) {
+                            const files = fs.readdirSync(fullProjDir).filter(f => f.endsWith('.jsonl'));
+                            for (const file of files) {
+                                const filePath = path.join(fullProjDir, file);
+                                const stat = fs.statSync(filePath);
+                                if (stat.mtimeMs > latestMtime) {
+                                    latestMtime = stat.mtimeMs;
+                                    latestFile = filePath;
                                 }
-                                break;
                             }
-                        } catch {}
+                        }
                     }
+                }
+            }
+
+            if (latestFile) {
+                const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    try {
+                        const data = JSON.parse(lines[i]);
+
+                        // Handle both Antigravity format (PLANNER_RESPONSE) and Claude Code format (assistant text)
+                        let responseText: string | null = null;
+
+                        if (data.type === 'PLANNER_RESPONSE' && data.content) {
+                            responseText = data.content.trim();
+                        } else if (data.type === 'assistant' || data.role === 'assistant') {
+                            if (typeof data.content === 'string') {
+                                responseText = data.content.trim();
+                            } else if (Array.isArray(data.content)) {
+                                const textBlocks = data.content.filter((b: any) => b.type === 'text' && b.text);
+                                if (textBlocks.length > 0) {
+                                    responseText = textBlocks.map((b: any) => b.text).join(' ').trim();
+                                }
+                            }
+                        }
+
+                        if (responseText && responseText !== lastSpokenContent) {
+                            lastSpokenContent = responseText;
+                            const voiceKey = config.get<string>('voice', 'en_US-ljspeech-high');
+                            const speed = config.get<number>('speed', 0.85);
+                            await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
+                        }
+
+                        if (responseText) {
+                            break;
+                        }
+                    } catch {}
                 }
             }
         } catch {}
     };
 
-    // 50ms ultra-fast polling interval for new responses
+    // 50ms ultra-fast polling interval for host-isolated speech playback
     pollInterval = setInterval(checkFinalResponseOnly, 50);
 }
 
