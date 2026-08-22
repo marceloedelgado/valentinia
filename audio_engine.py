@@ -40,6 +40,17 @@ class AudioEngine:
         return os.getenv("SILENT_MODE", "false").lower() in ("true", "1", "yes")
 
     def get_default_voice(self) -> str:
+        for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("DEFAULT_VOICE="):
+                                val = line.split("=", 1)[1].strip()
+                                if val:
+                                    return val
+                except Exception:
+                    pass
         return os.getenv("DEFAULT_VOICE", "en_US-ljspeech-high")
 
     def get_default_speed(self) -> float:
@@ -138,8 +149,18 @@ class AudioEngine:
 
         model_path = os.path.join(self.voices_dir, f"{voice_name}.onnx")
         if not os.path.exists(model_path):
-            model_path = os.path.join(self.voices_dir, "en_US-ljspeech-high.onnx")
-            if not os.path.exists(model_path):
+            # Fallback to any locally installed voice model in ~/.valentinIA/voices/
+            if os.path.exists(self.voices_dir):
+                installed_models = [
+                    os.path.join(self.voices_dir, f)
+                    for f in os.listdir(self.voices_dir)
+                    if f.endswith(".onnx")
+                ]
+                if installed_models:
+                    model_path = installed_models[0]
+                else:
+                    return None
+            else:
                 return None
 
         output_file = os.path.join(self.temp_dir, f"speech_{uuid.uuid4().hex}.wav")
