@@ -7,9 +7,8 @@ import { VOICE_CATALOG } from './voiceCatalog';
 
 let audioEngine: NativeAudioEngine;
 let statusBarItem: vscode.StatusBarItem;
-let fileWatcher: fs.FSWatcher | null = null;
 let pollInterval: NodeJS.Timeout | null = null;
-let lastSpokenText: string = '';
+let lastSpokenContent: string = '';
 
 export function activate(context: vscode.ExtensionContext) {
     audioEngine = new NativeAudioEngine();
@@ -51,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native Transcript & IPC Watcher
+    // 3. Register Native IDE Transcript & IPC Watcher
     setupTranscriptWatcher();
 
     // 4. Register Native IDE Lifecycle Event Hooks
@@ -104,48 +103,87 @@ function setupTranscriptWatcher() {
 
     const requestFile = path.join(tempDir, 'speak_request.json');
 
-    const checkRequestFile = async () => {
+    const checkAllSources = async () => {
         const config = vscode.workspace.getConfiguration('valentinia');
         if (!config.get<boolean>('enabled', true)) {
             return;
         }
 
+        // A. Priority 1: Direct IPC speak_request.json
         if (fs.existsSync(requestFile)) {
             try {
                 const content = fs.readFileSync(requestFile, 'utf-8');
                 if (content.trim()) {
                     const payload = JSON.parse(content);
                     const message = payload.message || payload.text;
-                    if (message) {
-                        lastSpokenText = message;
+                    if (message && message !== lastSpokenContent) {
+                        lastSpokenContent = message;
                         const voiceKey = payload.voice || config.get<string>('voice', 'es_AR-daniela-high');
                         const speed = payload.speed || config.get<number>('speed', 1.0);
                         try {
                             fs.unlinkSync(requestFile);
-                        } catch {
-                            // ignore
-                        }
-                        await audioEngine.speak(message, voiceKey, speed);
+                        } catch {}
+                        await audioEngine.speak(cleanMarkdownForSpeech(message), voiceKey, speed);
+                        return;
                     }
                 }
-            } catch {
-                // ignore
-            }
+            } catch {}
         }
+
+        // B. Priority 2: Direct IDE Transcript Log Watcher (~/.gemini/antigravity-ide/brain/)
+        try {
+            const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
+            if (fs.existsSync(brainDir)) {
+                const convDirs = fs.readdirSync(brainDir);
+                let latestFile: string | null = null;
+                let latestMtime = 0;
+
+                for (const conv of convDirs) {
+                    const transcriptPath = path.join(brainDir, conv, '.system_generated', 'logs', 'transcript.jsonl');
+                    if (fs.existsSync(transcriptPath)) {
+                        const stat = fs.statSync(transcriptPath);
+                        if (stat.mtimeMs > latestMtime) {
+                            latestMtime = stat.mtimeMs;
+                            latestFile = transcriptPath;
+                        }
+                    }
+                }
+
+                if (latestFile && (Date.now() - latestMtime < 10000)) { // Updated in last 10s
+                    const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        try {
+                            const data = JSON.parse(lines[i]);
+                            if (data.type === 'PLANNER_RESPONSE' && data.content) {
+                                const responseText = data.content.trim();
+                                if (responseText && responseText !== lastSpokenContent) {
+                                    lastSpokenContent = responseText;
+                                    const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+                                    const speed = config.get<number>('speed', 1.0);
+                                    await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
+                                }
+                                break;
+                            }
+                        } catch {}
+                    }
+                }
+            }
+        } catch {}
     };
 
-    try {
-        fileWatcher = fs.watch(tempDir, (eventType, filename) => {
-            if (!filename || filename === 'speak_request.json') {
-                checkRequestFile();
-            }
-        });
-    } catch {
-        // fallback
-    }
+    pollInterval = setInterval(checkAllSources, 1000);
+}
 
-    // Always poll every 500ms as reliable fallback on macOS/Linux
-    pollInterval = setInterval(checkRequestFile, 500);
+function cleanMarkdownForSpeech(text: string): string {
+    return text
+        .replace(/```[\s\S]*?```/g, ' [bloque de código omitido] ') // Skip long code blocks in speech
+        .replace(/`([^`]+)`/g, '$1') // Inline code
+        .replace(/^#+\s+/gm, '') // Headers
+        .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
+        .replace(/\*([^*]+)\*/g, '$1') // Italic
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
+        .replace(/^[\s*-]+\s+/gm, '') // Bullet points
+        .trim();
 }
 
 function setMuteState(muted: boolean) {
@@ -169,13 +207,6 @@ function updateStatusBar() {
 export function deactivate() {
     if (pollInterval) {
         clearInterval(pollInterval);
-    }
-    if (fileWatcher) {
-        try {
-            fileWatcher.close();
-        } catch {
-            // ignore
-        }
     }
     if (audioEngine) {
         audioEngine.stop();
