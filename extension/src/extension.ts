@@ -100,7 +100,7 @@ function updateStatusBar() {
     const config = vscode.workspace.getConfiguration('valentinia');
     const enabled = config.get<boolean>('enabled', true);
     if (enabled) {
-        statusBarItem.text = '$(symbol-keyword) valentinIA: Active';
+        statusBarItem.text = '$(unmute) valentinIA: Active';
         statusBarItem.tooltip = 'valentinIA Native Voice Notifications Active (Click to Mute)';
     } else {
         statusBarItem.text = '$(mute) valentinIA: Muted';

@@ -16,7 +16,8 @@
     "Accessibility"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
