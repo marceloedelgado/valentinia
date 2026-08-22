@@ -39,6 +39,20 @@ class AudioEngine:
     def get_silent_mode(self) -> bool:
         return os.getenv("SILENT_MODE", "false").lower() in ("true", "1", "yes")
 
+    def get_read_mode(self) -> str:
+        for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, "r", encoding="utf-8") as f:
+                        for line in f:
+                            if line.startswith("READ_MODE="):
+                                val = line.split("=", 1)[1].strip()
+                                if val:
+                                    return val
+                except Exception:
+                    pass
+        return os.getenv("READ_MODE", "events")
+
     def get_default_voice(self) -> str:
         for env_path in [os.path.expanduser("~/.valentinIA/.env"), ".env"]:
             if os.path.exists(env_path):

@@ -224,7 +224,7 @@ class SetupWizard:
                 except OSError:
                     pass
 
-    def save_env_config(self, voice_key: str) -> None:
+    def save_env_config(self, voice_key: Optional[str] = None, read_mode: Optional[str] = None) -> None:
         target_files = [".env", os.path.expanduser("~/.valentinIA/.env")]
         for env_file in target_files:
             lines = []
@@ -237,15 +237,22 @@ class SetupWizard:
 
             new_lines = []
             voice_updated = False
+            mode_updated = False
+
             for line in lines:
-                if line.startswith("DEFAULT_VOICE="):
+                if voice_key and line.startswith("DEFAULT_VOICE="):
                     new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
                     voice_updated = True
+                elif read_mode and line.startswith("READ_MODE="):
+                    new_lines.append(f"READ_MODE={read_mode}\n")
+                    mode_updated = True
                 else:
                     new_lines.append(line)
 
-            if not voice_updated:
+            if voice_key and not voice_updated:
                 new_lines.append(f"DEFAULT_VOICE={voice_key}\n")
+            if read_mode and not mode_updated:
+                new_lines.append(f"READ_MODE={read_mode}\n")
 
             try:
                 with open(env_file, "w", encoding="utf-8") as f:
@@ -253,7 +260,19 @@ class SetupWizard:
             except Exception:
                 pass
 
-        print(f"\nConfiguration saved. Active voice: {voice_key}")
+        if voice_key:
+            print(f"\nConfiguration saved. Active voice: {voice_key}")
+        if read_mode:
+            print(f"\nConfiguration saved. Active reading mode: {read_mode}")
+
+    def prompt_reading_mode(self) -> None:
+        print("\nReading Mode")
+        print("--------------------------------------------------")
+        print("  1. Events (short notifications) *Default")
+        print("  2. Accessibility (full text responses)")
+        choice = input("\nSelect [1-2]: ").strip() or "1"
+        mode = "accessibility" if choice == "2" else "events"
+        self.save_env_config(read_mode=mode)
 
     def prompt_voice_selection(self, voice_key: str, label: str, sample: str) -> bool:
         print(f"\nTesting {label} voice...")
@@ -261,7 +280,8 @@ class SetupWizard:
 
         choice = input("\nUse this voice? [Y/n]: ").strip().lower()
         if choice in ("", "y", "yes"):
-            self.save_env_config(voice_key)
+            self.save_env_config(voice_key=voice_key)
+            self.prompt_reading_mode()
             return True
         return False
 
@@ -486,7 +506,7 @@ class SetupWizard:
 
     def run(self) -> None:
         while True:
-            print("\nvalentinIA Voice Setup")
+            print("\nvalentinIA Setup")
             print("--------------------------------------------------")
             print("  1. English")
             print("  2. Spanish")
@@ -495,11 +515,12 @@ class SetupWizard:
             print("  5. German")
             print("  6. Italian")
             print("  7. Other languages")
-            print("  8. Cancel")
+            print("  8. Reading Mode")
+            print("  9. Cancel")
 
-            choice = input("\nSelect [1-8] (Default 1): ").strip() or "1"
+            choice = input("\nSelect [1-9] (Default 1): ").strip() or "1"
 
-            if choice == "8":
+            if choice == "9":
                 print("Setup cancelled. Retaining current configuration.")
                 sys.exit(0)
             elif choice == "1":
@@ -539,12 +560,15 @@ class SetupWizard:
             elif choice == "7":
                 if self.menu_other_languages():
                     break
+            elif choice == "8":
+                self.prompt_reading_mode()
+                break
 
 
 if __name__ == "__main__":
     wizard = SetupWizard()
     if len(sys.argv) > 1 and sys.argv[1] in ("-y", "--non-interactive"):
         wizard.ensure_voice_downloaded("en_US-ljspeech-high")
-        wizard.save_env_config("en_US-ljspeech-high")
+        wizard.save_env_config(voice_key="en_US-ljspeech-high", read_mode="events")
     else:
         wizard.run()
