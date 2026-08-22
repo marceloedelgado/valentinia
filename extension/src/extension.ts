@@ -212,24 +212,27 @@ function setupTranscriptWatcher() {
                     }
                 }
             } else {
-                // 2. VS Code Isolated Logs (Claude Code CLI / VS Code Storage)
+                // 2. VS Code Isolated Logs (Claude Code CLI / Terminal / VS Code Extensions)
                 const claudeProjectsDir = path.join(os.homedir(), '.claude', 'projects');
                 if (fs.existsSync(claudeProjectsDir)) {
-                    const projectDirs = fs.readdirSync(claudeProjectsDir);
-                    for (const projDir of projectDirs) {
-                        const fullProjDir = path.join(claudeProjectsDir, projDir);
-                        if (fs.statSync(fullProjDir).isDirectory()) {
-                            const files = fs.readdirSync(fullProjDir).filter(f => f.endsWith('.jsonl'));
-                            for (const file of files) {
-                                const filePath = path.join(fullProjDir, file);
-                                const stat = fs.statSync(filePath);
-                                if (stat.mtimeMs > latestMtime) {
-                                    latestMtime = stat.mtimeMs;
-                                    latestFile = filePath;
+                    const scanDir = (dir: string) => {
+                        const entries = fs.readdirSync(dir);
+                        for (const entry of entries) {
+                            const fullPath = path.join(dir, entry);
+                            try {
+                                const stat = fs.statSync(fullPath);
+                                if (stat.isDirectory()) {
+                                    scanDir(fullPath);
+                                } else if (entry.endsWith('.jsonl')) {
+                                    if (stat.mtimeMs > latestMtime) {
+                                        latestMtime = stat.mtimeMs;
+                                        latestFile = fullPath;
+                                    }
                                 }
-                            }
+                            } catch {}
                         }
-                    }
+                    };
+                    scanDir(claudeProjectsDir);
                 }
             }
 
@@ -238,19 +241,22 @@ function setupTranscriptWatcher() {
                 for (let i = lines.length - 1; i >= 0; i--) {
                     try {
                         const data = JSON.parse(lines[i]);
-
-                        // Handle both Antigravity format (PLANNER_RESPONSE) and Claude Code format (assistant text)
                         let responseText: string | null = null;
 
+                        // 1. Antigravity Format (PLANNER_RESPONSE)
                         if (data.type === 'PLANNER_RESPONSE' && data.content) {
                             responseText = data.content.trim();
-                        } else if (data.type === 'assistant' || data.role === 'assistant') {
-                            if (typeof data.content === 'string') {
-                                responseText = data.content.trim();
-                            } else if (Array.isArray(data.content)) {
-                                const textBlocks = data.content.filter((b: any) => b.type === 'text' && b.text);
+                        }
+                        // 2. Claude Code Format (data.type === 'assistant' or data.message?.role === 'assistant')
+                        else if (data.type === 'assistant' || data.role === 'assistant' || data.message?.role === 'assistant') {
+                            const msgContent = data.message?.content || data.content;
+
+                            if (typeof msgContent === 'string') {
+                                responseText = msgContent.trim();
+                            } else if (Array.isArray(msgContent)) {
+                                const textBlocks = msgContent.filter((b: any) => b.type === 'text' && b.text);
                                 if (textBlocks.length > 0) {
-                                    responseText = textBlocks.map((b: any) => b.text).join(' ').trim();
+                                    responseText = textBlocks.map((b: any) => b.text).join('\n\n').trim();
                                 }
                             }
                         }
@@ -279,7 +285,7 @@ function cleanMarkdownForSpeech(text: string): string {
     return text
         .replace(/```[\s\S]*?```/g, ' [bloque de código omitido] ') // Skip long code blocks
         .replace(/`([^`]+)`/g, '$1') // Inline code
-        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // Strip Emojis
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // Strip Emojis
         .replace(/^#+\s+/gm, '') // Headers
         .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
         .replace(/\*([^*]+)\*/g, '$1') // Italic
