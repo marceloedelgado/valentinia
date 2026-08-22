@@ -22,7 +22,7 @@ def speak_status(
     voice: Optional[str] = None,
     speed: Optional[float] = None,
 ) -> str:
-    """Recites an asynchronous voice notification message with an optional pre-chime SFX sound cue.
+    """Recites a voice notification message via native extension and audio engine.
 
     Args:
         message: Text content for the AI assistant to speak aloud.
@@ -31,6 +31,7 @@ def speak_status(
         voice: Specific Piper voice model key.
         speed: Speech rate multiplier (default 1.0).
     """
+    # 1. Enqueue in Python Audio Engine
     audio_engine.enqueue_speech(
         message=message,
         status=status,
@@ -38,6 +39,25 @@ def speak_status(
         voice=voice,
         speed=speed,
     )
+
+    # 2. Write IPC payload for Native IDE Extension
+    try:
+        temp_dir = os.path.expanduser("~/.valentinIA/temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        request_file = os.path.join(temp_dir, "speak_request.json")
+
+        payload = {
+            "message": message,
+            "status": status,
+            "voice": voice or audio_engine.get_default_voice(),
+            "speed": speed or audio_engine.get_default_speed(),
+            "timestamp": os.path.getmtime(temp_dir) if os.path.exists(temp_dir) else 0,
+        }
+        with open(request_file, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+    except Exception:
+        pass
+
     return f"Notification queued successfully [status={status or 'info'}]."
 
 

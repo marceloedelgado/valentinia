@@ -1,9 +1,13 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 import { NativeAudioEngine } from './audioEngine';
 import { VOICE_CATALOG } from './voiceCatalog';
 
 let audioEngine: NativeAudioEngine;
 let statusBarItem: vscode.StatusBarItem;
+let fileWatcher: fs.FSWatcher | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
     audioEngine = new NativeAudioEngine();
@@ -45,7 +49,10 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native IDE Lifecycle Event Hooks
+    // 3. Register IPC File Watcher for AI Chat Responses
+    setupChatResponseWatcher();
+
+    // 4. Register Native IDE Lifecycle Event Hooks
     // Task End Event Hook (Terminal builds, scripts, tests completion)
     context.subscriptions.push(
         vscode.tasks.onDidEndTaskProcess(async (event) => {
@@ -90,6 +97,60 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
+function setupChatResponseWatcher() {
+    const tempDir = path.join(os.homedir(), '.valentinIA', 'temp');
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    const requestFile = path.join(tempDir, 'speak_request.json');
+
+    const handleFileChange = async () => {
+        const config = vscode.workspace.getConfiguration('valentinia');
+        if (!config.get<boolean>('enabled', true)) {
+            return;
+        }
+
+        if (!fs.existsSync(requestFile)) {
+            return;
+        }
+
+        try {
+            const content = fs.readFileSync(requestFile, 'utf-8');
+            if (!content.trim()) {
+                return;
+            }
+
+            const payload = JSON.parse(content);
+            const message = payload.message || payload.text;
+            if (!message) {
+                return;
+            }
+
+            const voiceKey = payload.voice || config.get<string>('voice', 'es_AR-daniela-high');
+            const speed = payload.speed || config.get<number>('speed', 1.0);
+
+            // Clean up request file immediately to avoid duplicate triggers
+            fs.unlinkSync(requestFile);
+
+            await audioEngine.speak(message, voiceKey, speed);
+        } catch {
+            // ignore JSON parse or read errors
+        }
+    };
+
+    try {
+        fileWatcher = fs.watch(tempDir, (eventType, filename) => {
+            if (filename === 'speak_request.json') {
+                handleFileChange();
+            }
+        });
+    } catch {
+        // fallback timer check if fs.watch fails
+        setInterval(handleFileChange, 1000);
+    }
+}
+
 function setMuteState(muted: boolean) {
     const config = vscode.workspace.getConfiguration('valentinia');
     config.update('enabled', !muted, vscode.ConfigurationTarget.Global);
@@ -109,6 +170,13 @@ function updateStatusBar() {
 }
 
 export function deactivate() {
+    if (fileWatcher) {
+        try {
+            fileWatcher.close();
+        } catch {
+            // ignore
+        }
+    }
     if (audioEngine) {
         audioEngine.stop();
     }
