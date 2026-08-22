@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native IDE Transcript & IPC Watcher
+    // 3. Register Native IDE Transcript Watcher (Final Response Only - Collision Free)
     setupTranscriptWatcher();
 
     // 4. Register Native IDE Lifecycle Event Hooks
@@ -202,41 +202,12 @@ async function showSpeedPickerMenu() {
 }
 
 function setupTranscriptWatcher() {
-    const tempDir = path.join(os.homedir(), '.valentinIA', 'temp');
-    if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    const requestFile = path.join(tempDir, 'speak_request.json');
-
-    const checkAllSources = async () => {
+    const checkFinalResponseOnly = async () => {
         const config = vscode.workspace.getConfiguration('valentinia');
         if (!config.get<boolean>('enabled', true)) {
             return;
         }
 
-        // A. Priority 1: Direct IPC speak_request.json
-        if (fs.existsSync(requestFile)) {
-            try {
-                const content = fs.readFileSync(requestFile, 'utf-8');
-                if (content.trim()) {
-                    const payload = JSON.parse(content);
-                    const message = payload.message || payload.text;
-                    if (message && message !== lastSpokenContent) {
-                        lastSpokenContent = message;
-                        const voiceKey = payload.voice || config.get<string>('voice', 'es_AR-daniela-high');
-                        const speed = payload.speed || config.get<number>('speed', 0.9);
-                        try {
-                            fs.unlinkSync(requestFile);
-                        } catch {}
-                        await audioEngine.speak(cleanMarkdownForSpeech(message), voiceKey, speed);
-                        return;
-                    }
-                }
-            } catch {}
-        }
-
-        // B. Priority 2: Direct IDE Transcript Log Watcher (~/.gemini/antigravity-ide/brain/)
         try {
             const brainDir = path.join(os.homedir(), '.gemini', 'antigravity-ide', 'brain');
             if (fs.existsSync(brainDir)) {
@@ -255,7 +226,7 @@ function setupTranscriptWatcher() {
                     }
                 }
 
-                if (latestFile && (Date.now() - latestMtime < 10000)) { // Updated in last 10s
+                if (latestFile && (Date.now() - latestMtime < 15000)) { // Updated in last 15s
                     const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
                     for (let i = lines.length - 1; i >= 0; i--) {
                         try {
@@ -277,7 +248,7 @@ function setupTranscriptWatcher() {
         } catch {}
     };
 
-    pollInterval = setInterval(checkAllSources, 1000);
+    pollInterval = setInterval(checkFinalResponseOnly, 1000);
 }
 
 function cleanMarkdownForSpeech(text: string): string {
