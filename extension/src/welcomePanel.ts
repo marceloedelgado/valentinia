@@ -78,10 +78,9 @@ export class WelcomePanel {
         const currentVoice = config.get<string>('voice', 'en_US-ljspeech-high');
         const currentSpeed = config.get<number>('speed', 0.85);
 
-        const optionsHtml = Object.values(VOICE_CATALOG).map(v => {
-            const isSel = v.key === currentVoice ? 'selected' : '';
-            return `<option value="${v.key}" ${isSel}>${v.label}</option>`;
-        }).join('\n');
+        const currentModel = VOICE_CATALOG[currentVoice] || VOICE_CATALOG['en_US-ljspeech-high'];
+
+        const catalogJson = JSON.stringify(VOICE_CATALOG);
 
         this.panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
@@ -95,7 +94,7 @@ export class WelcomePanel {
             background: #181825;
             color: #cdd6f4;
             padding: 40px 20px;
-            max-width: 580px;
+            max-width: 520px;
             margin: 0 auto;
         }
         .title {
@@ -193,18 +192,29 @@ export class WelcomePanel {
     </style>
 </head>
 <body>
-    <div class="title">valentinIA Voice Configuration</div>
-    <div class="subtitle">Zero-token native voice assistant setup</div>
+    <div class="title">valentinIA Voice Setup</div>
+    <div class="subtitle">Zero-token native voice assistant configuration</div>
 
     <div class="form-group">
-        <div class="label">Voice Language Model</div>
-        <select id="voiceSelect">
-            ${optionsHtml}
+        <div class="label">1. Language</div>
+        <select id="langSelect" onchange="onLanguageChange()">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Italian">Italian</option>
         </select>
     </div>
 
     <div class="form-group">
-        <div class="label">Speech Cadence Speed</div>
+        <div class="label">2. Regional Accent</div>
+        <select id="regionSelect">
+        </select>
+    </div>
+
+    <div class="form-group">
+        <div class="label">3. Speech Speed</div>
         <div class="speed-options">
             <div class="speed-btn ${currentSpeed === 0.75 ? 'selected' : ''}" onclick="setSpeed(0.75)">0.75x</div>
             <div class="speed-btn ${currentSpeed === 0.85 ? 'selected' : ''}" onclick="setSpeed(0.85)">0.85x (Default)</div>
@@ -220,7 +230,37 @@ export class WelcomePanel {
 
     <script>
         const vscode = acquireVsCodeApi();
+        const catalog = ${catalogJson};
         let selectedSpeed = ${currentSpeed};
+        let initVoiceKey = '${currentVoice}';
+        let initLang = '${currentModel.language}';
+        let initRegion = '${currentModel.region}';
+
+        document.getElementById('langSelect').value = initLang;
+        populateRegions(initLang, initRegion);
+
+        function onLanguageChange() {
+            const lang = document.getElementById('langSelect').value;
+            populateRegions(lang);
+        }
+
+        function populateRegions(lang, targetRegion) {
+            const regionSelect = document.getElementById('regionSelect');
+            regionSelect.innerHTML = '';
+
+            const models = Object.values(catalog).filter(m => m.language === lang);
+            models.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = m.key;
+                opt.textContent = m.region;
+                if (targetRegion && m.region === targetRegion) {
+                    opt.selected = true;
+                } else if (!targetRegion && idx === 0) {
+                    opt.selected = true;
+                }
+                regionSelect.appendChild(opt);
+            });
+        }
 
         function setSpeed(s) {
             selectedSpeed = s;
@@ -229,13 +269,13 @@ export class WelcomePanel {
         }
 
         function audition() {
-            const v = document.getElementById('voiceSelect').value;
-            vscode.postMessage({ command: 'testVoice', voice: v, speed: selectedSpeed });
+            const voiceKey = document.getElementById('regionSelect').value;
+            vscode.postMessage({ command: 'testVoice', voice: voiceKey, speed: selectedSpeed });
         }
 
         function save() {
-            const v = document.getElementById('voiceSelect').value;
-            vscode.postMessage({ command: 'saveSettings', voice: v, speed: selectedSpeed });
+            const voiceKey = document.getElementById('regionSelect').value;
+            vscode.postMessage({ command: 'saveSettings', voice: voiceKey, speed: selectedSpeed });
         }
     </script>
 </body>
