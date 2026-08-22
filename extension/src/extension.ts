@@ -13,9 +13,9 @@ let lastSpokenContent: string = '';
 export function activate(context: vscode.ExtensionContext) {
     audioEngine = new NativeAudioEngine();
 
-    // 1. Create Status Bar Item (Click opens Interactive Settings Menu)
+    // 1. Create Status Bar Item (Direct 1-Click Instant Mute / Active Toggle & Audio Kill)
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'valentinia.menu';
+    statusBarItem.command = 'valentinia.toggle';
     updateStatusBar();
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
@@ -54,7 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('valentinia.testVoice', async () => {
             const config = vscode.workspace.getConfiguration('valentinia');
             const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 0.9);
+            const speed = config.get<number>('speed', 0.85);
             const voiceInfo = VOICE_CATALOG[voiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
 
             vscode.window.showInformationMessage(`Testing valentinIA voice: ${voiceInfo.label}...`);
@@ -62,42 +62,10 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native IDE Transcript Watcher (Ultra-fast 100ms Instant Recitation)
+    // 3. Register Native IDE Transcript Watcher (Final Turn Completion Only)
     setupTranscriptWatcher();
 
-    // 4. Register Native IDE Lifecycle Event Hooks
-    context.subscriptions.push(
-        vscode.tasks.onDidEndTaskProcess(async (event) => {
-            const config = vscode.workspace.getConfiguration('valentinia');
-            if (!config.get<boolean>('enabled', true) || !config.get<boolean>('notifyOnTaskCompletion', true)) {
-                return;
-            }
-
-            const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 0.9);
-            const taskName = event.execution.task.name;
-
-            if (event.exitCode === 0) {
-                await audioEngine.speak(`La tarea ${taskName} ha sido completada exitosamente.`, voiceKey, speed);
-            } else {
-                await audioEngine.speak(`Atención. La tarea ${taskName} ha fallado con código de error ${event.exitCode}.`, voiceKey, speed);
-            }
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.debug.onDidTerminateDebugSession(async (session) => {
-            const config = vscode.workspace.getConfiguration('valentinia');
-            if (!config.get<boolean>('enabled', true) || !config.get<boolean>('notifyOnDebugTermination', true)) {
-                return;
-            }
-
-            const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-            const speed = config.get<number>('speed', 0.9);
-            await audioEngine.speak(`La sesión de depuración ${session.name} ha finalizado.`, voiceKey, speed);
-        })
-    );
-
+    // 4. Configuration Change Listener
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('valentinia')) {
@@ -111,7 +79,7 @@ async function showQuickSettingsMenu() {
     const config = vscode.workspace.getConfiguration('valentinia');
     const enabled = config.get<boolean>('enabled', true);
     const currentVoiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-    const currentSpeed = config.get<number>('speed', 0.9);
+    const currentSpeed = config.get<number>('speed', 0.85);
     const voiceInfo = VOICE_CATALOG[currentVoiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
 
     const items: vscode.QuickPickItem[] = [
@@ -125,7 +93,7 @@ async function showQuickSettingsMenu() {
         },
         {
             label: '$(dashboard) Adjust Speech Rate / Speed',
-            description: `Currently: ${currentSpeed.toFixed(2)}`
+            description: `Currently: ${currentSpeed.toFixed(2)}x`
         },
         {
             label: '$(play) Test Current Voice Sample',
@@ -174,13 +142,14 @@ async function showVoicePickerMenu() {
 
 async function showSpeedPickerMenu() {
     const config = vscode.workspace.getConfiguration('valentinia');
-    const currentSpeed = config.get<number>('speed', 0.9);
+    const currentSpeed = config.get<number>('speed', 0.85);
 
     const speedOptions = [
-        { label: '0.85 - Pausada / Relajada', speed: 0.85 },
-        { label: '0.90 - Narradora de Estudio (Recomendada)', speed: 0.90 },
-        { label: '1.00 - Estándar', speed: 1.00 },
-        { label: '1.10 - Rápida', speed: 1.10 }
+        { label: '0.75x - Muy Pausada / Calma', speed: 0.75 },
+        { label: '0.85x - Narradora de Estudio 24kHz (Por Defecto)', speed: 0.85 },
+        { label: '0.95x - Estándar', speed: 0.95 },
+        { label: '1.05x - Rápida', speed: 1.05 },
+        { label: '1.15x - Ultra Rápida', speed: 1.15 }
     ];
 
     const items: vscode.QuickPickItem[] = speedOptions.map(opt => ({
@@ -196,7 +165,7 @@ async function showSpeedPickerMenu() {
         const found = speedOptions.find(opt => opt.label === selection.label);
         if (found) {
             config.update('speed', found.speed, vscode.ConfigurationTarget.Global);
-            vscode.window.showInformationMessage(`valentinIA Speech Speed set to: ${found.speed}`);
+            vscode.window.showInformationMessage(`valentinIA Speech Speed set to: ${found.speed}x`);
         }
     }
 }
@@ -226,30 +195,33 @@ function setupTranscriptWatcher() {
                     }
                 }
 
-                if (latestFile && (Date.now() - latestMtime < 10000)) { // Updated in last 10s
-                    const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
-                    for (let i = lines.length - 1; i >= 0; i--) {
-                        try {
-                            const data = JSON.parse(lines[i]);
-                            if (data.type === 'PLANNER_RESPONSE' && data.content) {
-                                const responseText = data.content.trim();
-                                if (responseText && responseText !== lastSpokenContent) {
-                                    lastSpokenContent = responseText;
-                                    const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
-                                    const speed = config.get<number>('speed', 0.9);
-                                    await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
+                // Verify file has completed generation and settled for at least 5000ms (5 seconds buffer)
+                if (latestFile) {
+                    const quietTime = Date.now() - latestMtime;
+                    if (quietTime >= 5000 && quietTime < 60000) {
+                        const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
+                        for (let i = lines.length - 1; i >= 0; i--) {
+                            try {
+                                const data = JSON.parse(lines[i]);
+                                if (data.type === 'PLANNER_RESPONSE' && data.content) {
+                                    const responseText = data.content.trim();
+                                    if (responseText && responseText !== lastSpokenContent) {
+                                        lastSpokenContent = responseText;
+                                        const voiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+                                        const speed = config.get<number>('speed', 0.85);
+                                        await audioEngine.speak(cleanMarkdownForSpeech(responseText), voiceKey, speed);
+                                    }
+                                    break;
                                 }
-                                break;
-                            }
-                        } catch { }
+                            } catch {}
+                        }
                     }
                 }
             }
-        } catch { }
+        } catch {}
     };
 
-    // Ultra-fast 100ms interval for near-instantaneous speech playback as soon as text renders!
-    pollInterval = setInterval(checkFinalResponseOnly, 100);
+    pollInterval = setInterval(checkFinalResponseOnly, 500);
 }
 
 function cleanMarkdownForSpeech(text: string): string {
@@ -268,7 +240,11 @@ function cleanMarkdownForSpeech(text: string): string {
 
 function setMuteState(muted: boolean) {
     const config = vscode.workspace.getConfiguration('valentinia');
-    config.update('enabled', !muted, vscode.ConfigurationTarget.Global);
+    const newEnabledState = !muted;
+    config.update('enabled', newEnabledState, vscode.ConfigurationTarget.Global);
+    if (muted) {
+        audioEngine.stop(); // INSTANTLY KILL AUDIO PLAYBACK
+    }
     updateStatusBar();
 }
 
@@ -277,10 +253,10 @@ function updateStatusBar() {
     const enabled = config.get<boolean>('enabled', true);
     if (enabled) {
         statusBarItem.text = '$(unmute) valentinIA: Active';
-        statusBarItem.tooltip = 'valentinIA Settings Menu (Click to open menu)';
+        statusBarItem.tooltip = 'Click to INSTANTLY MUTE & silence audio';
     } else {
         statusBarItem.text = '$(mute) valentinIA: Muted';
-        statusBarItem.tooltip = 'valentinIA Settings Menu (Click to open menu)';
+        statusBarItem.tooltip = 'Click to ACTIVATE voice output';
     }
 }
 

@@ -95,17 +95,17 @@
         },
         "valentinia.speed": {
           "type": "number",
-          "default": 0.9,
-          "description": "Speech synthesis speed rate (0.85 = relaxed/slow, 0.9 = natural studio narrator (default), 1.0 = normal, 1.1 = fast)."
+          "default": 0.85,
+          "description": "Speech synthesis speed rate (0.75 = muy pausada, 0.85 = narradora de estudio 24kHz (default), 0.95 = estándar, 1.05 = rápida)."
         },
         "valentinia.notifyOnTaskCompletion": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Play audible voice notification when a terminal task finishes execution."
         },
         "valentinia.notifyOnDebugTermination": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Play audible voice notification when a debug session terminates."
         }
       }

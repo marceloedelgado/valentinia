@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { spawn, execSync } from 'child_process';
+import { spawn, execSync, ChildProcess } from 'child_process';
 import { VOICE_CATALOG } from './voiceCatalog';
 
 export class NativeAudioEngine {
@@ -9,7 +9,8 @@ export class NativeAudioEngine {
     private venvBin: string;
     private voicesDir: string;
     private tempDir: string;
-    private activeProcess: any = null;
+    private activePiperProcess: ChildProcess | null = null;
+    private activePlayerProcess: ChildProcess | null = null;
 
     constructor() {
         this.baseDir = path.join(os.homedir(), '.valentinIA');
@@ -41,17 +42,26 @@ export class NativeAudioEngine {
     }
 
     public stop(): void {
-        if (this.activeProcess) {
+        if (this.activePiperProcess) {
             try {
-                this.activeProcess.kill('SIGKILL');
+                this.activePiperProcess.kill('SIGKILL');
             } catch {
                 // ignore
             }
-            this.activeProcess = null;
+            this.activePiperProcess = null;
+        }
+
+        if (this.activePlayerProcess) {
+            try {
+                this.activePlayerProcess.kill('SIGKILL');
+            } catch {
+                // ignore
+            }
+            this.activePlayerProcess = null;
         }
     }
 
-    public speak(text: string, voiceKey: string = 'es_AR-daniela-high', speed: number = 1.0): Promise<void> {
+    public speak(text: string, voiceKey: string = 'es_AR-daniela-high', speed: number = 0.85): Promise<void> {
         return new Promise((resolve) => {
             this.stop();
 
@@ -78,18 +88,22 @@ export class NativeAudioEngine {
             }
 
             const tempWav = path.join(this.tempDir, `native_${Date.now()}.wav`);
-            const lengthScale = speed > 0 ? (1.0 / speed).toFixed(2) : '1.0';
+            const lengthScale = speed > 0 ? (1.0 / speed).toFixed(2) : '1.18';
 
-            const piperProc = spawn(piperBin, [
+            this.activePiperProcess = spawn(piperBin, [
                 '--model', modelPath,
                 '--output-file', tempWav,
                 '--length-scale', lengthScale
             ]);
 
-            piperProc.stdin.write(text, 'utf-8');
-            piperProc.stdin.end();
+            if (this.activePiperProcess.stdin) {
+                this.activePiperProcess.stdin.write(text, 'utf-8');
+                this.activePiperProcess.stdin.end();
+            }
 
-            piperProc.on('close', (code) => {
+            this.activePiperProcess.on('close', (code) => {
+                this.activePiperProcess = null;
+
                 if (code === 0 && fs.existsSync(tempWav)) {
                     const playerCmd = this.resolveAudioPlayer();
                     if (!playerCmd) {
@@ -103,16 +117,16 @@ export class NativeAudioEngine {
                         args = [`(New-Object Media.SoundPlayer '${tempWav}').PlaySync()`];
                     }
 
-                    this.activeProcess = spawn(playerCmd[0], playerCmd.slice(1).concat(args));
+                    this.activePlayerProcess = spawn(playerCmd[0], playerCmd.slice(1).concat(args));
 
-                    this.activeProcess.on('close', () => {
-                        this.activeProcess = null;
+                    this.activePlayerProcess.on('close', () => {
+                        this.activePlayerProcess = null;
                         this.cleanup(tempWav);
                         resolve();
                     });
 
-                    this.activeProcess.on('error', () => {
-                        this.activeProcess = null;
+                    this.activePlayerProcess.on('error', () => {
+                        this.activePlayerProcess = null;
                         this.cleanup(tempWav);
                         resolve();
                     });
@@ -122,7 +136,8 @@ export class NativeAudioEngine {
                 }
             });
 
-            piperProc.on('error', () => {
+            this.activePiperProcess.on('error', () => {
+                this.activePiperProcess = null;
                 this.cleanup(tempWav);
                 resolve();
             });
