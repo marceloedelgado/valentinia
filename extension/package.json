@@ -23,6 +23,21 @@
   "contributes": {
     "commands": [
       {
+        "command": "valentinia.menu",
+        "title": "valentinIA: Open Voice Settings Menu",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.selectVoice",
+        "title": "valentinIA: Select Regional Voice Accent",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.selectSpeed",
+        "title": "valentinIA: Adjust Speech Rate / Speed",
+        "category": "valentinIA"
+      },
+      {
         "command": "valentinia.enable",
         "title": "valentinIA: Activate Voice Output",
         "category": "valentinIA"

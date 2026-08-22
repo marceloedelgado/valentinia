@@ -13,15 +13,27 @@ let lastSpokenContent: string = '';
 export function activate(context: vscode.ExtensionContext) {
     audioEngine = new NativeAudioEngine();
 
-    // 1. Create Status Bar Item
+    // 1. Create Status Bar Item (Click opens Interactive Settings Menu)
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'valentinia.toggle';
+    statusBarItem.command = 'valentinia.menu';
     updateStatusBar();
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
     // 2. Register Commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('valentinia.menu', async () => {
+            showQuickSettingsMenu();
+        }),
+
+        vscode.commands.registerCommand('valentinia.selectVoice', async () => {
+            showVoicePickerMenu();
+        }),
+
+        vscode.commands.registerCommand('valentinia.selectSpeed', async () => {
+            showSpeedPickerMenu();
+        }),
+
         vscode.commands.registerCommand('valentinia.enable', () => {
             setMuteState(false);
             vscode.window.showInformationMessage('valentinIA Voice Output Activated.');
@@ -93,6 +105,100 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
     );
+}
+
+async function showQuickSettingsMenu() {
+    const config = vscode.workspace.getConfiguration('valentinia');
+    const enabled = config.get<boolean>('enabled', true);
+    const currentVoiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+    const currentSpeed = config.get<number>('speed', 0.9);
+    const voiceInfo = VOICE_CATALOG[currentVoiceKey] || VOICE_CATALOG['es_AR-daniela-high'];
+
+    const items: vscode.QuickPickItem[] = [
+        {
+            label: enabled ? '$(mute) Mute Voice Output' : '$(unmute) Activate Voice Output',
+            description: enabled ? 'Currently: ACTIVE' : 'Currently: MUTED'
+        },
+        {
+            label: '$(unmute) Select Regional Voice Model',
+            description: `Currently: ${voiceInfo.label}`
+        },
+        {
+            label: '$(dashboard) Adjust Speech Rate / Speed',
+            description: `Currently: ${currentSpeed.toFixed(2)}`
+        },
+        {
+            label: '$(play) Test Current Voice Sample',
+            description: 'Audition current voice model & speed'
+        }
+    ];
+
+    const selection = await vscode.window.showQuickPick(items, {
+        placeHolder: 'valentinIA Settings Menu'
+    });
+
+    if (!selection) {
+        return;
+    }
+
+    if (selection.label.includes('Mute') || selection.label.includes('Activate')) {
+        setMuteState(enabled);
+    } else if (selection.label.includes('Select Regional Voice')) {
+        showVoicePickerMenu();
+    } else if (selection.label.includes('Adjust Speech Rate')) {
+        showSpeedPickerMenu();
+    } else if (selection.label.includes('Test Current Voice')) {
+        vscode.commands.executeCommand('valentinia.testVoice');
+    }
+}
+
+async function showVoicePickerMenu() {
+    const config = vscode.workspace.getConfiguration('valentinia');
+    const currentVoiceKey = config.get<string>('voice', 'es_AR-daniela-high');
+
+    const items: vscode.QuickPickItem[] = Object.values(VOICE_CATALOG).map(v => ({
+        label: v.label,
+        description: v.key === currentVoiceKey ? '(Active)' : '',
+        detail: v.key
+    }));
+
+    const selection = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select Female Regional Voice Model'
+    });
+
+    if (selection && selection.detail) {
+        config.update('voice', selection.detail, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`valentinIA Voice set to: ${selection.label}`);
+    }
+}
+
+async function showSpeedPickerMenu() {
+    const config = vscode.workspace.getConfiguration('valentinia');
+    const currentSpeed = config.get<number>('speed', 0.9);
+
+    const speedOptions = [
+        { label: '0.85 - Pausada / Relajada', speed: 0.85 },
+        { label: '0.90 - Narradora de Estudio (Recomendada)', speed: 0.90 },
+        { label: '1.00 - Estándar', speed: 1.00 },
+        { label: '1.10 - Rápida', speed: 1.10 }
+    ];
+
+    const items: vscode.QuickPickItem[] = speedOptions.map(opt => ({
+        label: opt.label,
+        description: opt.speed === currentSpeed ? '(Active)' : ''
+    }));
+
+    const selection = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select Speech Rate Speed'
+    });
+
+    if (selection) {
+        const found = speedOptions.find(opt => opt.label === selection.label);
+        if (found) {
+            config.update('speed', found.speed, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(`valentinIA Speech Speed set to: ${found.speed}`);
+        }
+    }
 }
 
 function setupTranscriptWatcher() {
@@ -199,10 +305,10 @@ function updateStatusBar() {
     const enabled = config.get<boolean>('enabled', true);
     if (enabled) {
         statusBarItem.text = '$(unmute) valentinIA: Active';
-        statusBarItem.tooltip = 'valentinIA Native Voice Notifications Active (Click to Mute)';
+        statusBarItem.tooltip = 'valentinIA Settings Menu (Click to open menu)';
     } else {
         statusBarItem.text = '$(mute) valentinIA: Muted';
-        statusBarItem.tooltip = 'valentinIA Native Voice Notifications Muted (Click to Activate)';
+        statusBarItem.tooltip = 'valentinIA Settings Menu (Click to open menu)';
     }
 }
 
