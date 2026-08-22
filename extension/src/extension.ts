@@ -116,7 +116,7 @@ function setupTranscriptWatcher() {
                 if (content.trim()) {
                     const payload = JSON.parse(content);
                     const message = payload.message || payload.text;
-                    if (message && message !== lastSpokenText) {
+                    if (message) {
                         lastSpokenText = message;
                         const voiceKey = payload.voice || config.get<string>('voice', 'es_AR-daniela-high');
                         const speed = payload.speed || config.get<number>('speed', 1.0);
