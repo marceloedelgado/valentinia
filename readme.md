@@ -55,7 +55,7 @@ Immediately stops any playing audio and clears the queued speech list.
 - macOS, Linux, or Windows (with WSL/PowerShell)
 - Git
 
-### Setup
+### Setup (Zero-Friction 1-Click Onboarding)
 
 ```bash
 git clone https://github.com/yourusername/valentinIA.git
@@ -64,15 +64,26 @@ chmod +x install.sh
 ./install.sh
 ```
 
-### Interactive Voice Wizard (`setup.py`)
+> **Note:** `./install.sh` automatically provisions dependencies, downloads the default voice, and auto-configures detected AI IDE environments (Antigravity, Claude, Roo Code / VS Code, Cursor).
 
-Run `setup.py` anytime to configure your regional voice preferences:
+### Interactive Voice Wizard & CLI Control (`setup.py`)
+
+Run `setup.py` anytime to configure voice accents, reading mode, or toggle silence:
 
 ```bash
 python3 setup.py
 ```
 
-The wizard provides a minimal, clean menu to choose your accent (e.g. US, UK, Argentina, Spain, Mexico, Brazil, France, Germany, Italy), audition voice samples in real time, and confirm your selection.
+#### Quick CLI Flags:
+- `python3 setup.py --mute`: Instantly mutes valentinIA voice output.
+- `python3 setup.py --unmute`: Reactivates valentinIA voice output.
+- `python3 setup.py --auto-configure`: Re-runs IDE auto-configuration.
+
+### Agent Mute Command (via Chat)
+
+Instruct your AI agent directly in chat:
+- *"valentinIA silenciar"* ➔ Mutes voice output.
+- *"valentinIA activar audio"* ➔ Reactivates voice output.
 
 ## ⚙️ Integration (Antigravity & Others)
 

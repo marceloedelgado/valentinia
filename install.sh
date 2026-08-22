@@ -36,14 +36,13 @@ echo "📦 Installing Python dependencies (mcp, piper-tts, python-dotenv)..."
 "$VENV_DIR/bin/pip" install --upgrade pip --quiet
 "$VENV_DIR/bin/pip" install mcp piper-tts python-dotenv --quiet
 
-# 5. Provision base default voice model via setup.py
-echo "🎙️  Provisioning base high-quality female voice model..."
+# 5. Provision base default voice model and auto-configure IDEs
+echo "🎙️  Provisioning base voice model and auto-configuring AI IDEs..."
 "$VENV_DIR/bin/python" setup.py --non-interactive
 
 echo ""
 echo "🎉 Local setup completed successfully!"
 echo "📍 Python Executable Path: $VENV_DIR/bin/python"
 echo "📍 Voices Path: $VOICES_DIR"
-echo "📍 SFX Path: $SFX_DIR"
 echo ""
 echo "💡 Run 'python3 setup.py' anytime to launch the interactive voice wizard."
