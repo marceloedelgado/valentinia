@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 3. Register Native IDE Transcript Watcher (Ultra-fast 150ms Instant Recitation)
+    // 3. Register Native IDE Transcript Watcher (Ultra-fast 100ms Instant Recitation)
     setupTranscriptWatcher();
 
     // 4. Register Native IDE Lifecycle Event Hooks
@@ -226,7 +226,7 @@ function setupTranscriptWatcher() {
                     }
                 }
 
-                if (latestFile && (Date.now() - latestMtime < 15000)) { // Updated in last 15s
+                if (latestFile && (Date.now() - latestMtime < 10000)) { // Updated in last 10s
                     const lines = fs.readFileSync(latestFile, 'utf-8').trim().split('\n');
                     for (let i = lines.length - 1; i >= 0; i--) {
                         try {
@@ -241,15 +241,15 @@ function setupTranscriptWatcher() {
                                 }
                                 break;
                             }
-                        } catch {}
+                        } catch { }
                     }
                 }
             }
-        } catch {}
+        } catch { }
     };
 
-    // Ultra-fast 150ms interval for near-instantaneous speech playback as soon as text renders!
-    pollInterval = setInterval(checkFinalResponseOnly, 150);
+    // Ultra-fast 100ms interval for near-instantaneous speech playback as soon as text renders!
+    pollInterval = setInterval(checkFinalResponseOnly, 100);
 }
 
 function cleanMarkdownForSpeech(text: string): string {
