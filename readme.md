@@ -1,152 +1,112 @@
 <div align="center">
+  <img src="extension/icon.png" alt="valentinIA Icon" width="160" height="160" />
   <h1>🗣️ valentinIA</h1>
-  <p><strong>Local Voice MCP AI Assistant (Open Source)</strong></p>
-  
-  [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
-  [![MCP](https://img.shields.io/badge/Protocol-MCP-green.svg)](https://modelcontextprotocol.io/)
-  [![LLM Agnostic](https://img.shields.io/badge/LLM-Agnostic-8A2BE2.svg)](#-llm-agnostic)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  <p><strong>Zero-Token Local Neural Voice Assistant for AI Coding Sessions</strong></p>
+
+  <a href="https://marketplace.visualstudio.com/items?itemName=marcedelgadodev.valentinia-extension"><img src="https://img.shields.io/visual-studio-marketplace/v/marcedelgadodev.valentinia-extension?style=for-the-badge&label=VS%20Code%20Marketplace&color=blue" alt="VS Code Marketplace" /></a>
+  <a href="https://open-vsx.org/extension/marcedelgadodev/valentinia-extension"><img src="https://img.shields.io/open-vsx/v/marcedelgadodev/valentinia-extension?style=for-the-badge&label=Open%20VSX&color=purple" alt="Open VSX" /></a>
+  <a href="https://github.com/marceloedelgado/valentinia/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge" alt="License MIT" /></a>
+  <a href="https://marcedelgado.dev"><img src="https://img.shields.io/badge/Token%20Cost-0%20Tokens-brightgreen.svg?style=for-the-badge" alt="Zero Tokens" /></a>
+  <a href="https://marcedelgado.dev"><img src="https://img.shields.io/badge/Engine-C%2B%2B%20Native-8A2BE2.svg?style=for-the-badge" alt="C++ Native Engine" /></a>
 </div>
 
 ---
 
-**valentinIA** is a fast, asynchronous Model Context Protocol (MCP) server built in Python that gives your AI coding agents (like Gemini in Antigravity, Claude Code, or Roo Code) a fluid and configurable voice. 
+**valentinIA** is a zero-token native IDE voice assistant that recites AI agent text responses word-for-word out loud in natural, studio-quality 24kHz neural voices.
 
-Instead of staring at the terminal waiting for long tasks (migrations, tests, builds) to finish, valentinIA notifies you audibly with system chimes and human-like text-to-speech.
+Instead of staring at the editor waiting for long autonomous agent tasks (refactorings, builds, unit test runs) to complete, **valentinIA** reads responses aloud in real-time with zero LLM prompt token consumption, zero cloud API fees, and zero visual UI clutter.
 
-## 🧠 Powered by Piper TTS (Female Voice Standard)
-valentinIA integrates exclusively with **[piper-tts](https://github.com/rhasspy/piper)**, an ultra-fast, completely open-source neural text-to-speech engine. 
+---
 
-> 👩 **Voice Persona Standard:** All default and supported voice models in valentinIA are **exclusively female voices** across all regional accents and languages (e.g., `es_ES-sharvard-medium`, `es_AR-sharvard-medium`, `pt_BR-faber-medium`, `en_US-amy-medium`). It runs locally using ONNX models, ensuring zero latency, zero API costs, and absolute privacy. 
+## 🌟 Architecture Overview
 
-## 🤖 LLM Agnostic
-valentinIA is **100% model and AI provider agnostic**. As long as your model supports Tool Calling/Function Calling, it works perfectly.
-- **Cloud Providers:** Google (Gemini), Anthropic (Claude), OpenAI
-- **Local AI Servers:** Ollama, LM Studio, vLLM
-- **Local Models:** Llama 3, Qwen, Mistral, Phi-3
+`valentinIA` supports a **Dual Architecture** for maximum compatibility:
 
-## ✨ Features
-- ⚡ **Zero-Latency Local TTS:** 100% local CPU-friendly execution with ONNX models.
-- 🔊 **Non-Blocking Asynchronous Queue:** Internal FIFO background worker thread processes SFX and TTS sequentially without blocking LLM turns or overlapping audio.
-- 🎛️ **Voice Management:** Configurable tool parameters for language, voice model, and reading speed.
-- 🔔 **Multimodal Alerts (SFX):** Audio cues for states like `start`, `success`, `error`, `session_limit`, `token_limit`, `subscription_problem`, and `human_input_required`.
-- 🛑 **Playback Control:** Includes a `stop_speaking` tool to immediately halt playback and purge pending audio in queue.
-- 🌐 **Cross-Platform Audio:** Native execution on macOS (`afplay`), Linux (`aplay`/`paplay`/`pw-play`), and Windows (`powershell`).
-- 👁️‍🗨️ **Accessibility Modes:** `events` mode for critical state changes, or `accessibility` mode to read relevant workflow outputs.
-- 🔕 **Do Not Disturb Mode:** Easily mute the server via environment variables (`SILENT_MODE=true`).
-
-## 🛠️ MCP Tools Exposed
-
-### 1. `speak_status`
-Recites a message with a preceding sound chime based on status.
-- **`message`** *(string, required)*: The text for the AI to recite.
-- **`status`** *(string, optional)*: Event state (`start`, `success`, `error`, `session_limit`, `token_limit`, `subscription_problem`, `human_input_required`).
-- **`language`** *(string, optional)*: Language code (e.g. `es`, `en`).
-- **`voice`** *(string, optional)*: Specific Piper voice model key.
-- **`speed`** *(float, optional)*: Speech playback rate multiplier (default `1.0`).
-
-### 2. `stop_speaking`
-Immediately stops any playing audio and clears the queued speech list.
-
-## 🚀 Installation
-
-### Prerequisites
-- Python 3.10+
-- macOS, Linux, or Windows (with WSL/PowerShell)
-- Git
-
-### Setup (Zero-Friction 1-Click Onboarding)
-
-```bash
-git clone https://github.com/yourusername/valentinIA.git
-cd valentinIA
-chmod +x install.sh
-./install.sh
+```
+                  ┌─────────────────────────────────────────┐
+                  │              AI Coding Agent            │
+                  │   (Gemini, Claude Code, Cursor, Roo)    │
+                  └────────────────────┬────────────────────┘
+                                       │
+                    ┌──────────────────┴──────────────────┐
+                    ▼                                     ▼
+        ┌───────────────────────┐             ┌───────────────────────┐
+        │  Native Extension     │             │    Python MCP Server  │
+        │ (VS Code / Antigravity│             │ (Claude Code / Roo)   │
+        └───────────┬───────────┘             └───────────┬───────────┘
+                    │                                     │
+                    └──────────────────┬──────────────────┘
+                                       │ (50ms Zero-Latency Execution)
+                                       ▼
+                  ┌─────────────────────────────────────────┐
+                  │      Standalone C++ Piper Binary        │
+                  │        (~/.valentinIA/bin/piper)        │
+                  └─────────────────────────────────────────┘
 ```
 
-> **Note:** `./install.sh` automatically provisions dependencies, downloads the default voice, and auto-configures detected AI IDE environments (Antigravity, Claude, Roo Code / VS Code, Cursor).
+1. **Native IDE Extension (`extension/`):** Runs natively inside Visual Studio Code and Antigravity IDE. Listens directly to IDE background transcripts, requiring zero tool calling and consuming **0 tokens**.
+2. **Model Context Protocol Server (`server.py`):** Operates as a local MCP server for CLI environments like Claude Code or Roo Code.
 
-### Interactive Voice Wizard & CLI Control (`setup.py`)
+---
 
-Run `setup.py` anytime to configure voice accents, reading mode, or toggle silence:
+## ✨ Key Capabilities
 
-```bash
-python3 setup.py
-```
+- ⚡ **50ms Zero-Latency Execution:** Spawns cached local C++ Piper neural synthesis binaries synchronously. No Python, virtualenv, or pip installation required on the host system.
+- 💰 **Zero-Token Cost:** Operates via background transcript listeners. Uses 0 LLM prompt tokens and zero cloud API fees.
+- 🔒 **Host & Workspace Isolation:** Dynamic host environment detection prevents cross-talk audio between Antigravity IDE and VS Code instances.
+- 🎙️ **30 Languages & 34 Regional Accents:** Studio-quality 24kHz female voice models across 4 continents.
+- 🎼 **Naturalized Speech Cadence:** Automatic Markdown punctuation naturalization for headers, lists, colons, and **1.2s silence pauses** on horizontal section dividers (`---`).
+- 🛑 **1-Click Instant Mute:** Click the status bar (`valentinIA: Active`) anytime to instantly terminate audio playback.
 
-#### Quick CLI Flags:
-- `python3 setup.py --mute`: Instantly mutes valentinIA voice output.
-- `python3 setup.py --unmute`: Reactivates valentinIA voice output.
-- `python3 setup.py --auto-configure`: Re-runs IDE auto-configuration.
+---
 
-### Agent Mute Command (via Chat)
+## 🌐 Voice Catalog (30 Languages / 34 Accents)
 
-Instruct your AI agent directly in chat:
-- *"valentinIA silenciar"* ➔ Mutes voice output.
-- *"valentinIA activar audio"* ➔ Reactivates voice output.
+All default and supported voice models in `valentinIA` use audited **studio-quality female voice models**:
 
-## ⚙️ Integration (Antigravity & Others)
+| Region / Language | Primary Voice Model | Accents / Variants |
+| :--- | :--- | :--- |
+| **English** | `en_US-ljspeech-high` (24kHz) | USA, UK (`Cori High`) |
+| **Spanish** | `es_AR-daniela-high` (24kHz) | Argentina, Spain (`MLS Female`), Mexico (`Claude High`) |
+| **Portuguese** | `pt_BR-faber-medium` | Brazil |
+| **French** | `fr_FR-siwis-medium` | France |
+| **German** | `de_DE-kerstin-low` | Germany |
+| **Italian** | `it_IT-paola-medium` | Italy |
+| **European Languages** | *Dutch, Polish, Ukrainian, Swedish, Danish, Finnish, Greek, Czech, Hungarian, Romanian, Turkish, Catalan* | 11 Continental Voice Models |
+| **Asian Languages** | *Chinese, Japanese, Korean, Hindi, Vietnamese, Thai* | 6 Regional Voice Models |
+| **Middle East** | *Arabic, Hebrew, Persian* | 3 Regional Voice Models |
+| **Africa** | *Swahili, Amharic, Yoruba, Hausa* | 4 Continental Voice Models |
 
-Add the following configuration to your MCP client settings (e.g., Antigravity or Claude Code configuration file):
+---
 
-```json
-{
-  "mcpServers": {
-    "valentinIA": {
-      "command": "/Users/YOUR_USER/.valentinIA/venv/bin/python",
-      "args": ["/path/to/valentinIA/server.py"],
-      "env": {
-        "READ_MODE": "events",
-        "SILENT_MODE": "false",
-        "DEFAULT_VOICE": "en_US-amy-medium",
-        "DEFAULT_SPEED": "1.0"
-      }
-    }
-  }
-}
-```
+## 🚀 Quick Setup & Installation
 
-## 💡 Recommended Agent Rule / System Prompt
+### Option A: Install from VS Code Marketplace (1-Click)
+1. Open **Visual Studio Code** ➔ Press `Cmd+Shift+X` (Extensions tab).
+2. Search for: **`valentinIA`** or **`marcedelgadodev`**.
+3. Click **Install**.
 
-To ensure your AI agent proactively uses **valentinIA**, add a rule to your workspace (e.g. in `.agents/rules/valentinIA.md` for Antigravity or `CLAUDE.md` for Claude Code):
+### Option B: Install in Antigravity IDE / Cursor / VSCodium (Open VSX)
+1. Open **Antigravity IDE** or **Cursor** ➔ Press `Cmd+Shift+X`.
+2. Search for **`valentinIA`**.
+3. Click **Install**.
 
-```markdown
-# Voice Notifications Rule
-- Call `speak_status` with `status="start"` when initiating long background commands or multi-step operations.
-- Call `speak_status` with `status="success"` upon successfully resolving a task or fixing a build/test error.
-- Call `speak_status` with `status="error"` or `status="human_input_required"` if blocked or requiring user approval.
-- Keep spoken text concise and clear.
-```
+### Option C: Interactive General Settings
+Open the onboarding setup panel anytime in your editor via:
+- Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) ➔ `valentinIA: General Settings`
 
-## 🎨 Phase 2: Native IDE Extension (Zero-Token Consumption)
+---
 
-The **valentinIA Native Extension** (`extension/`) runs natively inside Node.js/TypeScript within your IDE process.
+## 🔒 Privacy & Local Execution
 
-### Features
-- **0 Token Consumption:** Operates natively in Node.js/TypeScript inside the IDE. No LLM prompt context or tokens used.
-- **Deterministic Lifecycle Event Hooks:**
-  - `onDidEndTaskProcess`: Plays voice notifications when terminal tasks, builds, or scripts finish.
-  - `onDidTerminateDebugSession`: Plays voice notifications when debug sessions end.
-- **1-Click Status Bar Item:** Shows `🗣️ valentinIA: Active` or `🤫 valentinIA: Muted` to toggle voice output with 1 click.
-- **Local Audio Engine:** Spawns local `piper` child processes directly without web APIs or cloud subscriptions.
+`valentinIA` operates **100% offline and locally on your machine**. Neural text-to-speech synthesis takes place inside `~/.valentinIA/` using native local executables. No voice data, source code, or conversation transcripts are ever transmitted over the network.
 
-### Extension Setup & Build
+---
 
-```bash
-cd extension
-npm install
-npm run compile
-```
+## 📑 Governance & License
 
-## 🤝 Contributing
-valentinIA is an open-source initiative and we welcome contributions from the global developer community! 
-Whether you want to add new Piper voice models, optimize the asynchronous queue, fix bugs, or improve compatibility with more MCP clients, your PRs are highly appreciated.
+Distributed under the **MIT License**. Created and maintained by **[Marcelo Delgado (marcedelgado.dev)](https://marcedelgado.dev)**.
 
-- Fork the repository
-- Create your feature branch (`git checkout -b feature/AmazingFeature`)
-- Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-- Push to the branch (`git push origin feature/AmazingFeature`)
-- Open a Pull Request
-
-## 📄 License
-Distributed under the MIT License. See `LICENSE` for more information.
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Issue Tracker](https://github.com/marceloedelgado/valentinia/issues)
