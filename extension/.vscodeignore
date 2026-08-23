@@ -1,0 +1,9 @@
+.vscode/**
+.vscode-test/**
+src/**
+tsconfig.json
+valentinia-icon-final.png
+valentinia-icon-final.svg
+valentinia-extension-*.vsix
+.DS_Store
+APP Clientes/**
