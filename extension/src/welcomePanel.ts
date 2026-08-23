@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { VOICE_CATALOG } from './voiceCatalog';
+import { VOICE_CATALOG, VoiceModel } from './voiceCatalog';
 
 export class WelcomePanel {
     public static currentPanel: WelcomePanel | undefined;
@@ -78,8 +78,11 @@ export class WelcomePanel {
         const currentVoice = config.get<string>('voice', 'en_US-ljspeech-high');
         const currentSpeed = config.get<number>('speed', 0.85);
 
-        const currentModel = VOICE_CATALOG[currentVoice] || VOICE_CATALOG['en_US-ljspeech-high'];
+        const extension = vscode.extensions.getExtension('valentinia.valentinia-extension');
+        const version = extension ? extension.packageJSON.version : '1.1.0';
 
+        const iconUri = this.panel.webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'icon.png'));
+        const currentModel = VOICE_CATALOG[currentVoice] || VOICE_CATALOG['en_US-ljspeech-high'];
         const catalogJson = JSON.stringify(VOICE_CATALOG);
 
         this.panel.webview.html = `<!DOCTYPE html>
@@ -89,51 +92,100 @@ export class WelcomePanel {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>valentinIA Setup</title>
     <style>
+        :root {
+            --bg-color: #181825;
+            --border-color: #313244;
+            --text-main: #cdd6f4;
+            --text-sub: #a6adc8;
+            --accent-pink: #f5c2e7;
+            --accent-purple: #cba6f7;
+            --accent-blue: #89b4fa;
+            --btn-bg: #313244;
+            --btn-hover: #45475a;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #181825;
-            color: #cdd6f4;
-            padding: 40px 20px;
-            max-width: 520px;
+            font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
+            background: var(--bg-color);
+            color: var(--text-main);
+            padding: 48px 24px;
+            max-width: 500px;
             margin: 0 auto;
         }
+        .header {
+            margin-bottom: 28px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .title-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
         .title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: #f5c2e7;
-            margin-bottom: 6px;
+            color: var(--accent-pink);
             letter-spacing: -0.5px;
+        }
+        .version-tag {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            background: #313244;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
         }
         .subtitle {
             font-size: 14px;
-            color: #a6adc8;
-            margin-bottom: 32px;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
         }
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .label {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: #89b4fa;
-            margin-bottom: 8px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         select {
             width: 100%;
-            padding: 12px 14px;
-            background: #313244;
-            color: #cdd6f4;
-            border: 1px solid #45475a;
+            padding: 10px 12px;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
             cursor: pointer;
             box-sizing: border-box;
         }
         select:focus {
-            border-color: #cba6f7;
+            border-color: var(--accent-purple);
         }
         .speed-options {
             display: flex;
@@ -141,50 +193,53 @@ export class WelcomePanel {
         }
         .speed-btn {
             flex: 1;
-            padding: 10px 0;
-            background: #313244;
-            color: #cdd6f4;
-            border: 1px solid #45475a;
+            padding: 9px 0;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             text-align: center;
             cursor: pointer;
+            transition: all 0.15s ease;
         }
         .speed-btn.selected {
-            background: #cba6f7;
+            background: var(--accent-purple);
             color: #11111b;
-            border-color: #cba6f7;
+            border-color: var(--accent-purple);
         }
         .actions {
             display: flex;
-            gap: 12px;
-            margin-top: 36px;
+            gap: 10px;
+            margin-top: 32px;
         }
         .btn-test {
             flex: 1;
-            padding: 12px;
-            background: #313244;
-            color: #cdd6f4;
-            border: 1px solid #45475a;
+            padding: 11px;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
+            transition: background 0.15s;
         }
         .btn-test:hover {
-            background: #45475a;
+            background: var(--btn-hover);
         }
         .btn-save {
             flex: 2;
-            padding: 12px;
-            background: #cba6f7;
+            padding: 11px;
+            background: var(--accent-purple);
             color: #11111b;
             border: none;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
+            transition: opacity 0.15s;
         }
         .btn-save:hover {
             opacity: 0.9;
@@ -192,8 +247,20 @@ export class WelcomePanel {
     </style>
 </head>
 <body>
-    <div class="title">valentinIA Voice Setup</div>
-    <div class="subtitle">Zero-token native voice assistant configuration</div>
+    <div class="header">
+        <div class="header-brand">
+            <img src="${iconUri}" class="brand-icon" alt="valentinIA Icon" />
+            <div>
+                <div class="title-row">
+                    <div class="title">valentinIA</div>
+                    <div class="version-tag">v${version}</div>
+                </div>
+                <div class="subtitle">Zero-token local voice AI assistant</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header">Setup</div>
 
     <div class="form-group">
         <div class="label">1. Language</div>
@@ -204,17 +271,28 @@ export class WelcomePanel {
             <option value="French">French</option>
             <option value="German">German</option>
             <option value="Italian">Italian</option>
+            <option value="Other languages">Other languages</option>
+        </select>
+    </div>
+
+    <div class="form-group" id="continentGroup" style="display: none;">
+        <div class="label">2. Region / Continent</div>
+        <select id="continentSelect" onchange="onContinentChange()">
+            <option value="Europe">Europe</option>
+            <option value="Asia">Asia</option>
+            <option value="Middle East">Middle East</option>
+            <option value="Africa">Africa</option>
+        </select>
+    </div>
+
+    <div class="form-group" id="accentGroup">
+        <div class="label" id="accentLabel">2. Regional Accent</div>
+        <select id="accentSelect">
         </select>
     </div>
 
     <div class="form-group">
-        <div class="label">2. Regional Accent</div>
-        <select id="regionSelect">
-        </select>
-    </div>
-
-    <div class="form-group">
-        <div class="label">3. Speech Speed</div>
+        <div class="label">Speech Speed</div>
         <div class="speed-options">
             <div class="speed-btn ${currentSpeed === 0.75 ? 'selected' : ''}" onclick="setSpeed(0.75)">0.75x</div>
             <div class="speed-btn ${currentSpeed === 0.85 ? 'selected' : ''}" onclick="setSpeed(0.85)">0.85x (Default)</div>
@@ -234,21 +312,57 @@ export class WelcomePanel {
         let selectedSpeed = ${currentSpeed};
         let initVoiceKey = '${currentVoice}';
         let initLang = '${currentModel.language}';
+        let initContinent = '${currentModel.continent || 'Europe'}';
         let initRegion = '${currentModel.region}';
 
         document.getElementById('langSelect').value = initLang;
-        populateRegions(initLang, initRegion);
+        updateFormHierarchy(initLang, initContinent, initRegion);
 
         function onLanguageChange() {
             const lang = document.getElementById('langSelect').value;
-            populateRegions(lang);
+            updateFormHierarchy(lang);
         }
 
-        function populateRegions(lang, targetRegion) {
-            const regionSelect = document.getElementById('regionSelect');
-            regionSelect.innerHTML = '';
+        function onContinentChange() {
+            const lang = document.getElementById('langSelect').value;
+            const continent = document.getElementById('continentSelect').value;
+            updateAccentDropdown(lang, continent);
+        }
 
-            const models = Object.values(catalog).filter(m => m.language === lang);
+        function updateFormHierarchy(lang, targetContinent, targetRegion) {
+            const continentGroup = document.getElementById('continentGroup');
+            const accentGroup = document.getElementById('accentGroup');
+            const accentLabel = document.getElementById('accentLabel');
+
+            if (lang === 'Other languages') {
+                continentGroup.style.display = 'block';
+                accentGroup.style.display = 'block';
+                accentLabel.textContent = '3. Language Selection';
+                const continent = targetContinent || document.getElementById('continentSelect').value;
+                document.getElementById('continentSelect').value = continent;
+                updateAccentDropdown(lang, continent, targetRegion);
+            } else if (lang === 'English' || lang === 'Spanish') {
+                continentGroup.style.display = 'none';
+                accentGroup.style.display = 'block';
+                accentLabel.textContent = '2. Regional Accent';
+                updateAccentDropdown(lang, null, targetRegion);
+            } else {
+                // Portuguese, French, German, Italian (Direct single voice play)
+                continentGroup.style.display = 'none';
+                accentGroup.style.display = 'none';
+                updateAccentDropdown(lang, null, targetRegion);
+            }
+        }
+
+        function updateAccentDropdown(lang, continent, targetRegion) {
+            const accentSelect = document.getElementById('accentSelect');
+            accentSelect.innerHTML = '';
+
+            let models = Object.values(catalog).filter(m => m.language === lang);
+            if (lang === 'Other languages' && continent) {
+                models = models.filter(m => m.continent === continent);
+            }
+
             models.forEach((m, idx) => {
                 const opt = document.createElement('option');
                 opt.value = m.key;
@@ -258,7 +372,7 @@ export class WelcomePanel {
                 } else if (!targetRegion && idx === 0) {
                     opt.selected = true;
                 }
-                regionSelect.appendChild(opt);
+                accentSelect.appendChild(opt);
             });
         }
 
@@ -269,12 +383,12 @@ export class WelcomePanel {
         }
 
         function audition() {
-            const voiceKey = document.getElementById('regionSelect').value;
+            const voiceKey = document.getElementById('accentSelect').value;
             vscode.postMessage({ command: 'testVoice', voice: voiceKey, speed: selectedSpeed });
         }
 
         function save() {
-            const voiceKey = document.getElementById('regionSelect').value;
+            const voiceKey = document.getElementById('accentSelect').value;
             vscode.postMessage({ command: 'saveSettings', voice: voiceKey, speed: selectedSpeed });
         }
     </script>

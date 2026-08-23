@@ -1,12 +1,21 @@
 {
   "name": "valentinia-extension",
   "displayName": "valentinIA - Native Voice Assistant",
-  "description": "Zero-token native IDE voice assistant for local task completion and status notifications.",
+  "description": "Zero-token native neural voice assistant for AI coding sessions in VS Code & Antigravity IDE.",
   "version": "1.1.0",
-  "publisher": "valentinia",
+  "publisher": "marcedelgadodev",
+  "author": {
+    "name": "Marcelo Delgado (marcedelgado.dev)",
+    "url": "https://marcedelgado.dev"
+  },
+  "homepage": "https://marcedelgado.dev",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/marceloedelgado/valentinia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marceloedelgado/valentinia/issues"
   },
   "engines": {
     "vscode": "^1.75.0"
@@ -24,12 +33,12 @@
     "commands": [
       {
         "command": "valentinia.welcome",
-        "title": "valentinIA: Open Welcome & Settings Webview Page",
+        "title": "valentinIA: General Settings",
         "category": "valentinIA"
       },
       {
         "command": "valentinia.menu",
-        "title": "valentinIA: Open Voice Settings Menu",
+        "title": "valentinIA: Quick Menu",
         "category": "valentinIA"
       },
       {
@@ -86,15 +95,15 @@
             "it_IT-paola-medium"
           ],
           "enumDescriptions": [
-            "English (USA) - LJ Speech High (Default)",
-            "Spanish (Argentina) - Daniela High",
-            "Spanish (Spain) - MLS Female",
-            "Spanish (Mexico) - Claude High",
-            "English (UK) - Cori High",
-            "Portuguese (Brazil) - Faber Medium",
-            "French (France) - Siwis Medium",
-            "German (Germany) - Kerstin Low",
-            "Italian (Italy) - Paola Medium"
+            "English - USA (Default)",
+            "Spanish - Argentina",
+            "Spanish - Spain",
+            "Spanish - Mexico",
+            "English - UK",
+            "Portuguese",
+            "French",
+            "German",
+            "Italian"
           ],
           "description": "Default regional female voice model for speech synthesis."
         },

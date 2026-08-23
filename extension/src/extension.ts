@@ -18,11 +18,14 @@ export function activate(context: vscode.ExtensionContext) {
     // 1. Session Mute Reset (Always start in ACTIVE state on window reload)
     sessionMuted = false;
 
-    // 2. First-Install Onboarding Flow (Zero Surprises / Zero Unwanted Recitation)
+    // 2. First-Install Onboarding Flow (Dual-Page Coexistence: Extension Details + Onboarding Webview)
     const hasInstalledBefore = context.globalState.get<boolean>('hasInstalledBefore', false);
     if (!hasInstalledBefore) {
         context.globalState.update('hasInstalledBefore', true);
         markExistingTranscriptAsRead();
+
+        // Open Default Extension Details Page (with README, marketing info, Uninstall & Settings buttons)
+        vscode.commands.executeCommand('extension.open', 'valentinia.valentinia-extension').then(() => { }, () => { });
 
         // Recite initial greeting sample
         setTimeout(async () => {
@@ -32,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
             await audioEngine.speak(cleanMarkdownForSpeech("Hi, I'm valentinIA. You can change my language anytime."), voiceKey, speed);
         }, 1000);
 
-        // Open Welcome Panel automatically on first install
+        // Open Welcome Panel automatically in active focus in front of details page
         setTimeout(() => {
             WelcomePanel.show(
                 context.extensionUri,
@@ -162,7 +165,7 @@ function markExistingTranscriptAsRead() {
                                     latestFile = fullPath;
                                 }
                             }
-                        } catch {}
+                        } catch { }
                     }
                 };
                 scanDir(claudeProjectsDir);
@@ -192,10 +195,10 @@ function markExistingTranscriptAsRead() {
                         lastSpokenContent = responseText;
                         break;
                     }
-                } catch {}
+                } catch { }
             }
         }
-    } catch {}
+    } catch { }
 }
 
 async function showQuickSettingsMenu(context: vscode.ExtensionContext) {
@@ -210,7 +213,7 @@ async function showQuickSettingsMenu(context: vscode.ExtensionContext) {
             description: !sessionMuted ? 'Currently: ACTIVE' : 'Currently: MUTED'
         },
         {
-            label: '$(layout) Open Welcome & Settings Webview Page',
+            label: '$(layout) General Settings',
             description: 'Interactive visual setup panel'
         },
         {
@@ -237,7 +240,7 @@ async function showQuickSettingsMenu(context: vscode.ExtensionContext) {
 
     if (selection.label.includes('Mute') || selection.label.includes('Activate')) {
         vscode.commands.executeCommand('valentinia.toggle');
-    } else if (selection.label.includes('Open Welcome & Settings')) {
+    } else if (selection.label.includes('Settings')) {
         vscode.commands.executeCommand('valentinia.welcome');
     } else if (selection.label.includes('Select Regional Voice')) {
         showVoicePickerMenu();
@@ -350,7 +353,7 @@ function setupTranscriptWatcher() {
                                         latestFile = fullPath;
                                     }
                                 }
-                            } catch {}
+                            } catch { }
                         }
                     };
                     scanDir(claudeProjectsDir);
@@ -392,10 +395,10 @@ function setupTranscriptWatcher() {
                         if (responseText) {
                             break;
                         }
-                    } catch {}
+                    } catch { }
                 }
             }
-        } catch {}
+        } catch { }
     };
 
     // 50ms ultra-fast polling interval for host-isolated speech playback
@@ -407,11 +410,16 @@ function cleanMarkdownForSpeech(text: string): string {
         .replace(/```[\s\S]*?```/g, ' [bloque de código omitido] ') // Skip long code blocks
         .replace(/`([^`]+)`/g, '$1') // Inline code
         .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '') // Strip Emojis
-        .replace(/^#+\s+/gm, '') // Headers
+        .replace(/^[\s*-]{3,}$/gm, ' . . . ') // Convert horizontal dividers (--- / ***) into extended 1.2s acoustic silence pauses
+        .replace(/^#+\s*(.+)$/gm, '$1.') // Convert Headers (# Title) into a distinct sentence with a trailing period & pause
+        .replace(/^[\s*-]+\s*(.+)$/gm, '$1.') // Convert Bullet Points (- Item) into distinct sentences with a trailing period & pause
+        .replace(/:\s*\n/g, '. \n') // Convert colons before newlines into full stops
+        .replace(/:\s+/g, ', ') // Convert inline colons into comma pause markers
         .replace(/\*\*([^*]+)\*\*/g, '$1') // Bold
         .replace(/\*([^*]+)\*/g, '$1') // Italic
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
-        .replace(/^[\s*-]+\s+/gm, '') // Bullet points
+        .replace(/\n+/g, '. ') // Convert multiple newlines into full stops for distinct sentence pauses
+        .replace(/\.\s*\./g, '.') // Normalize duplicate periods
         .replace(/\s+/g, ' ') // Normalize spaces
         .trim();
 }
