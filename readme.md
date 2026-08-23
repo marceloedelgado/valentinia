@@ -1,6 +1,6 @@
 <div align="center">
   <img src="extension/icon.png" alt="valentinIA Icon" width="160" height="160" />
-  <h1>🗣️ valentinIA</h1>
+  <h1>valentinIA</h1>
   <p><strong>Zero-Token Local Neural Voice Assistant for AI Coding Sessions</strong></p>
 
   <a href="https://marketplace.visualstudio.com/items?itemName=marcedelgadodev.valentinia-extension"><img src="https://img.shields.io/visual-studio-marketplace/v/marcedelgadodev.valentinia-extension?style=for-the-badge&label=VS%20Code%20Marketplace&color=blue" alt="VS Code Marketplace" /></a>
@@ -18,7 +18,7 @@ Instead of staring at the editor waiting for long autonomous agent tasks (refact
 
 ---
 
-## 🌟 Architecture Overview
+## Architecture Overview
 
 `valentinIA` supports a **Dual Architecture** for maximum compatibility:
 
@@ -49,18 +49,18 @@ Instead of staring at the editor waiting for long autonomous agent tasks (refact
 
 ---
 
-## ✨ Key Capabilities
+## Key Capabilities
 
-- ⚡ **50ms Zero-Latency Execution:** Spawns cached local C++ Piper neural synthesis binaries synchronously. No Python, virtualenv, or pip installation required on the host system.
-- 💰 **Zero-Token Cost:** Operates via background transcript listeners. Uses 0 LLM prompt tokens and zero cloud API fees.
-- 🔒 **Host & Workspace Isolation:** Dynamic host environment detection prevents cross-talk audio between Antigravity IDE and VS Code instances.
-- 🎙️ **30 Languages & 34 Regional Accents:** Studio-quality 24kHz female voice models across 4 continents.
-- 🎼 **Naturalized Speech Cadence:** Automatic Markdown punctuation naturalization for headers, lists, colons, and **1.2s silence pauses** on horizontal section dividers (`---`).
-- 🛑 **1-Click Instant Mute:** Click the status bar (`valentinIA: Active`) anytime to instantly terminate audio playback.
+- **50ms Zero-Latency Execution:** Spawns cached local C++ Piper neural synthesis binaries synchronously. No Python, virtualenv, or pip installation required on the host system.
+- **Zero-Token Cost:** Operates via background transcript listeners. Uses 0 LLM prompt tokens and zero cloud API fees.
+- **Host & Workspace Isolation:** Dynamic host environment detection prevents cross-talk audio between Antigravity IDE and VS Code instances.
+- **30 Languages & 34 Regional Accents:** Studio-quality 24kHz female voice models across 4 continents.
+- **Naturalized Speech Cadence:** Automatic Markdown punctuation naturalization for headers, lists, colons, and **1.2s silence pauses** on horizontal section dividers (`---`).
+- **1-Click Instant Mute:** Click the status bar (`valentinIA: Active`) anytime to instantly terminate audio playback.
 
 ---
 
-## 🌐 Voice Catalog (30 Languages / 34 Accents)
+## Voice Catalog (30 Languages / 34 Accents)
 
 All default and supported voice models in `valentinIA` use audited **studio-quality female voice models**:
 
@@ -79,7 +79,7 @@ All default and supported voice models in `valentinIA` use audited **studio-qual
 
 ---
 
-## 🚀 Quick Setup & Installation
+## Quick Setup & Installation
 
 ### Option A: Install from VS Code Marketplace (1-Click)
 1. Open **Visual Studio Code** ➔ Press `Cmd+Shift+X` (Extensions tab).
@@ -97,13 +97,13 @@ Open the onboarding setup panel anytime in your editor via:
 
 ---
 
-## 🔒 Privacy & Local Execution
+## Privacy & Local Execution
 
 `valentinIA` operates **100% offline and locally on your machine**. Neural text-to-speech synthesis takes place inside `~/.valentinIA/` using native local executables. No voice data, source code, or conversation transcripts are ever transmitted over the network.
 
 ---
 
-## 📑 Governance & License
+## Governance & License
 
 Distributed under the **MIT License**. Created and maintained by **[Marcelo Delgado (marcedelgado.dev)](https://marcedelgado.dev)**.
 

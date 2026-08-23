@@ -1,6 +1,6 @@
 # valentinIA
 
-[![Open General Settings](https://img.shields.io/badge/⚙%20General%20Settings-Launch%20Webview%20Setup-cba6f7?style=for-the-badge)](command:valentinia.welcome)
+[![Open General Settings](https://img.shields.io/badge/General%20Settings-Launch%20Webview%20Setup-cba6f7?style=for-the-badge)](command:valentinia.welcome)
 [![AI-Ready](https://img.shields.io/badge/AI--Ready-yes-brightgreen.svg?style=for-the-badge)](https://marcedelgado.dev)
 [![Token Cost](https://img.shields.io/badge/Token%20Cost-0%20Tokens-blue.svg?style=for-the-badge)](https://marcedelgado.dev)
 [![Engine](https://img.shields.io/badge/Engine-C%2B%2B%20Native-purple.svg?style=for-the-badge)](https://marcedelgado.dev)
@@ -12,10 +12,10 @@
 
 ---
 
-## ⚡ Quick Action: Launch General Settings
+## Quick Action: Launch General Settings
 
 Click the button above or execute in Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`):  
-👉 **`valentinIA: General Settings`**
+**`valentinIA: General Settings`**
 
 ---
 
@@ -52,8 +52,8 @@ Open the interactive onboarding panel anytime via:
 - Status Bar Menu ➔ Click `valentinIA: Active` ➔ `General Settings`
 
 ### 2. Status Bar Control
-- **`$(unmute) valentinIA: Active`**: Click to INSTANTLY MUTE speech output for the active session.
-- **`$(mute) valentinIA: Muted`**: Click to ACTIVATE voice output.
+- **`valentinIA: Active`**: Click to INSTANTLY MUTE speech output for the active session.
+- **`valentinIA: Muted`**: Click to ACTIVATE voice output.
 
 ---
 
