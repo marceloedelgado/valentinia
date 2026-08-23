@@ -1,0 +1,142 @@
+{
+  "name": "valentinia-extension",
+  "displayName": "valentinIA - Native Voice Assistant",
+  "description": "Zero-token native neural voice assistant for AI coding sessions in VS Code & Antigravity IDE.",
+  "version": "1.1.0",
+  "publisher": "marcedelgadodev",
+  "license": "MIT",
+  "author": {
+    "name": "Marcelo Delgado (marcedelgado.dev)",
+    "url": "https://marcedelgado.dev"
+  },
+  "homepage": "https://marcedelgado.dev",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marceloedelgado/valentinia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marceloedelgado/valentinia/issues"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "valentinia.welcome",
+        "title": "valentinIA: General Settings",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.menu",
+        "title": "valentinIA: Quick Menu",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.selectVoice",
+        "title": "valentinIA: Select Regional Voice Accent",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.selectSpeed",
+        "title": "valentinIA: Adjust Speech Rate / Speed",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.enable",
+        "title": "valentinIA: Activate Voice Output",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.disable",
+        "title": "valentinIA: Mute Voice Output",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.toggle",
+        "title": "valentinIA: Toggle Mute / Active",
+        "category": "valentinIA"
+      },
+      {
+        "command": "valentinia.testVoice",
+        "title": "valentinIA: Test Current Voice Sample",
+        "category": "valentinIA"
+      }
+    ],
+    "configuration": {
+      "title": "valentinIA",
+      "properties": {
+        "valentinia.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable native voice notifications."
+        },
+        "valentinia.voice": {
+          "type": "string",
+          "default": "en_US-ljspeech-high",
+          "enum": [
+            "en_US-ljspeech-high",
+            "es_AR-daniela-high",
+            "es_ES-mls_10246-low",
+            "es_MX-claude-high",
+            "en_GB-cori-high",
+            "pt_BR-faber-medium",
+            "fr_FR-siwis-medium",
+            "de_DE-kerstin-low",
+            "it_IT-paola-medium"
+          ],
+          "enumDescriptions": [
+            "English - USA (Default)",
+            "Spanish - Argentina",
+            "Spanish - Spain",
+            "Spanish - Mexico",
+            "English - UK",
+            "Portuguese",
+            "French",
+            "German",
+            "Italian"
+          ],
+          "description": "Default regional female voice model for speech synthesis."
+        },
+        "valentinia.speed": {
+          "type": "number",
+          "default": 0.85,
+          "description": "Speech synthesis speed rate (0.75 = relaxed, 0.85 = studio narrator 24kHz (default), 0.95 = standard, 1.05 = fast)."
+        },
+        "valentinia.notifyOnTaskCompletion": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play audible voice notification when a terminal task finishes execution."
+        },
+        "valentinia.notifyOnDebugTermination": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play audible voice notification when a debug session terminates."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.15.0",
+    "typescript": "^5.0.0"
+  },
+  "overrides": {
+    "undici": "5.28.4"
+  }
+}

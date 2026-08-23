@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "valentinIA": {
+      "command": "/Users/mdelgado/.valentinIA/venv/bin/python",
+      "args": [
+        "/Users/mdelgado/Documents/marcedelgado.dev/proyectos/valentinia/server.py"
+      ],
+      "env": {
+        "READ_MODE": "events",
+        "SILENT_MODE": "false"
+      }
+    }
+  }
+}
