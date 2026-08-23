@@ -1,4 +1,4 @@
-# valentinIA
+# valentinIA - Native AI Voice Assistant
 
 [![Open General Settings](https://img.shields.io/badge/General%20Settings-Launch%20Webview%20Setup-cba6f7?style=for-the-badge)](command:valentinia.welcome)
 [![AI-Ready](https://img.shields.io/badge/AI--Ready-yes-brightgreen.svg?style=for-the-badge)](https://marcedelgado.dev)
@@ -6,7 +6,7 @@
 [![Engine](https://img.shields.io/badge/Engine-C%2B%2B%20Native-purple.svg?style=for-the-badge)](https://marcedelgado.dev)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge)](https://marcedelgado.dev)
 
-> **Zero-token native neural voice assistant for AI coding sessions in VS Code & Antigravity IDE.**
+> **Zero-token native neural AI voice assistant for coding sessions in VS Code & Antigravity IDE.**
 
 `valentinIA` is a zero-token native IDE voice assistant that recites AI agent text responses word-for-word out loud in natural, studio-quality 24kHz neural voices. It runs 100% locally on your machine with **zero LLM prompt token consumption**, **zero cloud API fees**, and **zero visual UI clutter**.
 

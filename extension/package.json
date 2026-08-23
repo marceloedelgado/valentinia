@@ -1,7 +1,7 @@
 {
   "name": "valentinia-extension",
-  "displayName": "valentinIA - Native Voice Assistant",
-  "description": "Zero-token native neural voice assistant for AI coding sessions in VS Code & Antigravity IDE.",
+  "displayName": "valentinIA - Native AI Voice Assistant",
+  "description": "Zero-token native neural AI voice assistant for coding sessions in VS Code & Antigravity IDE.",
   "version": "1.1.0",
   "publisher": "marcedelgadodev",
   "license": "MIT",
