@@ -1,7 +1,7 @@
 <div align="center">
   <img src="extension/icon.png" alt="valentinIA Icon" width="160" height="160" />
   <h1>valentinIA</h1>
-  <p><strong>Zero-Token Local Neural Voice Assistant for AI Coding Sessions</strong></p>
+  <p><strong>Native AI Voice Assistant for Coding Sessions (Zero-Token)</strong></p>
 
   <a href="https://marketplace.visualstudio.com/items?itemName=marcedelgadodev.valentinia-extension"><img src="https://img.shields.io/visual-studio-marketplace/v/marcedelgadodev.valentinia-extension?style=for-the-badge&label=VS%20Code%20Marketplace&color=blue" alt="VS Code Marketplace" /></a>
   <a href="https://open-vsx.org/extension/marcedelgadodev/valentinia-extension"><img src="https://img.shields.io/open-vsx/v/marcedelgadodev/valentinia-extension?style=for-the-badge&label=Open%20VSX&color=purple" alt="Open VSX" /></a>
