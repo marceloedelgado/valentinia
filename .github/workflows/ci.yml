@@ -1,0 +1,41 @@
+name: CI - Extension Build & Package Verification
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install Extension Dependencies
+        run: |
+          cd extension
+          npm ci
+
+      - name: Compile TypeScript
+        run: |
+          cd extension
+          npm run compile
+
+      - name: Package VSIX Extension
+        run: |
+          cd extension
+          npx vsce package --no-dependencies
+
+      - name: Verify VSIX Package Output
+        run: |
+          ls -lh extension/*.vsix

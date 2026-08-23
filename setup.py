@@ -26,7 +26,7 @@ VOICE_MAP = {
         "sample": "Hola, las tareas fueron completadas exitosamente.",
     },
     "es_ES": {
-        "key": "es_ES-sharvard-medium",
+        "key": "es_ES-mls_10246-low",
         "label": "Spain",
         "sample": "Hola, las tareas fueron completadas exitosamente.",
     },
